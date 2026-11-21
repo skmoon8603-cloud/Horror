@@ -40,27 +40,31 @@ const box = (w, h, d, mat, x, y, z) => mesh(new THREE.BoxGeometry(w, h, d), mat,
 const cyl = (rt, rb, h, mat, x, y, z, seg = 12) => mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat, x, y, z);
 const capsule = (r, len, mat, x, y, z) => mesh(new THREE.CapsuleGeometry(r, len, 6, 12), mat, x, y, z);
 
-// ===== 거울 속의 나 (참고 이미지: 흰 셔츠, 넥타이, 흰 줄 검정 니트 조끼, 회색 체크 바지, 흰 밑창 검정 운동화) =====
-export function makeStudent() {
+// ===== 학생 (나·반 친구들). 참고 이미지: 흰 셔츠, 넥타이, 흰 줄 검정 니트 조끼, 회색 체크 바지, 흰 밑창 검정 운동화 =====
+export function makeStudent(o = {}) {
   const g = new THREE.Group();
-  const faceN = TX.faceTex(false), faceG = TX.faceTex(true);
-  const legs = [];
+  const faceN = o.faceTex || TX.faceTex(false), faceG = TX.faceTex(true);
+  const hairM = o.hairColor ? std({ color: o.hairColor, roughness: 0.55 }) : M.hair();
+  const legs = [], knees = [];
+  const lowerMat = o.girl ? once('skirt', () => std({ map: TX.checkPantsTex(), color: 0x7b86a8, roughness: 0.85 })) : M.pants();
   for (const s of [-1, 1]) {
     const hip = new THREE.Group(); hip.position.set(s * 0.1, 0.92, 0); g.add(hip);
-    hip.add(capsule(0.078, 0.62, M.pants(), 0, -0.42, 0));
-    const shoe = new THREE.Group(); shoe.position.set(0, -0.86, 0.04); hip.add(shoe);
+    hip.add(capsule(o.girl ? 0.06 : 0.078, 0.3, o.girl ? M.skin() : M.pants(), 0, -0.22, 0));
+    const knee = new THREE.Group(); knee.position.set(0, -0.44, 0); hip.add(knee);
+    knee.add(capsule(o.girl ? 0.052 : 0.07, 0.3, o.girl ? once('sock', () => std({ color: 0xeeeeee, roughness: 0.8 })) : M.pants(), 0, -0.2, 0));
+    const shoe = new THREE.Group(); shoe.position.set(0, -0.42, 0.04); knee.add(shoe);
     shoe.add(box(0.11, 0.035, 0.28, M.shoeWht(), 0, -0.02, 0)); shoe.add(box(0.1, 0.07, 0.24, M.shoeBlk(), 0, 0.03, -0.01)); shoe.add(box(0.1, 0.05, 0.05, M.shoeWht(), 0, 0.01, 0.12));
-    legs.push(hip);
+    legs.push(hip); knees.push(knee);
   }
-  g.add(mesh(new RoundedBoxGeometry(0.36, 0.14, 0.22, 3, 0.06), M.pants(), 0, 0.95, 0));
-  const torsoMats = [M.knit(), M.knit(), M.knit(), M.knit(), std({ map: TX.vestFrontTex(), roughness: 0.95 }), M.knit()];
-  g.add(mesh(new RoundedBoxGeometry(0.38, 0.5, 0.22, 4, 0.08), torsoMats, 0, 1.24, 0));
-  g.add(mesh(new RoundedBoxGeometry(0.4, 0.08, 0.2, 3, 0.04), M.shirt(), 0, 1.5, 0)); // 어깨(셔츠)
+  if (o.girl) { const sk = mesh(new THREE.CylinderGeometry(0.17, 0.27, 0.42, 20, 1, true), lowerMat, 0, 0.84, 0); sk.material.side = THREE.DoubleSide; g.add(sk); }
+  else g.add(mesh(new RoundedBoxGeometry(0.36, 0.14, 0.22, 3, 0.06), M.pants(), 0, 0.95, 0));
+  const torsoMats = [M.knit(), M.knit(), M.knit(), M.knit(), once('vestF', () => std({ map: TX.vestFrontTex(), roughness: 0.95 })), M.knit()];
+  g.add(mesh(new RoundedBoxGeometry(o.girl ? 0.34 : 0.38, 0.5, 0.21, 4, 0.08), torsoMats, 0, 1.24, 0));
+  g.add(mesh(new RoundedBoxGeometry(o.girl ? 0.36 : 0.4, 0.08, 0.2, 3, 0.04), M.shirt(), 0, 1.5, 0));
   const arms = [];
   for (const s of [-1, 1]) {
-    const sh = new THREE.Group(); sh.position.set(s * 0.235, 1.47, 0); sh.rotation.z = s * 0.06; g.add(sh);
-    sh.add(capsule(0.056, 0.42, M.shirt(), 0, -0.26, 0));
-    sh.add(cyl(0.05, 0.05, 0.04, M.shirt(), 0, -0.5, 0)); // 소매 끝 (손은 주머니 속)
+    const sh = new THREE.Group(); sh.position.set(s * (o.girl ? 0.215 : 0.235), 1.47, 0); sh.rotation.z = s * 0.06; g.add(sh);
+    sh.add(capsule(0.052, 0.42, M.shirt(), 0, -0.26, 0)); sh.add(mesh(new THREE.SphereGeometry(0.045, 10, 8), M.skin(), 0, -0.55, 0));
     arms.push(sh);
   }
   g.add(cyl(0.05, 0.055, 0.1, M.skin(), 0, 1.56, 0));
@@ -70,11 +74,92 @@ export function makeStudent() {
   const faceMat = std({ map: faceN, transparent: true, roughness: 0.6, depthWrite: false });
   const face = mesh(new THREE.SphereGeometry(0.1135, 24, 18, Math.PI / 2 - 0.95, 1.9, 0.62, 1.55), faceMat, 0, 0, 0, false); face.scale.copy(skull.scale); head.add(face);
   for (const s of [-1, 1]) head.add(mesh(new THREE.SphereGeometry(0.025, 8, 8), M.skin(), s * 0.1, -0.01, 0));
-  const hair = mesh(new THREE.SphereGeometry(0.121, 28, 18, Math.PI / 2 + 1.05, Math.PI * 2 - 2.1, 0, 1.75), M.hair()); hair.scale.set(0.93, 1.13, 1.04); hair.position.set(0, 0.006, -0.004); head.add(hair); // 뒤·옆머리
-  const fringe = mesh(new THREE.SphereGeometry(0.1215, 24, 12, Math.PI / 2 - 1.1, 2.2, 0, 1.02), M.hair()); fringe.scale.copy(hair.scale); fringe.position.set(0, 0.006, -0.002); head.add(fringe); // 앞머리 (눈썹 위까지)
-  g.userData = { legs, arms, head, faceMat, faceN, faceG, faceY: 1.7 };
+  const back = o.girl ? 2.45 : 1.75; // 여학생은 턱선까지 오는 단발
+  const hair = mesh(new THREE.SphereGeometry(0.121, 28, 18, Math.PI / 2 + 1.05, Math.PI * 2 - 2.1, 0, back), hairM); hair.scale.set(o.girl ? 1.02 : 0.93, 1.13, 1.06); hair.position.set(0, 0.006, -0.004); head.add(hair);
+  const fringe = mesh(new THREE.SphereGeometry(0.1215, 24, 12, Math.PI / 2 - 1.1, 2.2, 0, 1.02), hairM); fringe.scale.copy(hair.scale); fringe.position.set(0, 0.006, -0.002); head.add(fringe);
+  if (o.glasses) { const gm = once('glass', () => std({ color: 0x111111, roughness: 0.3, metalness: 0.6 })); for (const sx of [-1, 1]) { const r = mesh(new THREE.TorusGeometry(0.026, 0.004, 6, 16), gm, sx * 0.042, 0.015, 0.108, false); head.add(r); } head.add(box(0.03, 0.004, 0.004, gm, 0, 0.018, 0.112)); }
+  if (o.ribbon) { const rm = std({ color: 0xb01828, roughness: 0.5 }); for (const sx of [-1, 1]) { const b = box(0.07, 0.05, 0.02, rm, sx * 0.04, 0.02, -0.125); b.rotation.z = sx * 0.4; head.add(b); } }
+  g.userData = { legs, knees, arms, head, faceMat, faceN, faceG, faceY: 1.7 };
   return g;
 }
+// 앉은 자세
+export function sit(st) { const u = st.userData; for (const h of u.legs) h.rotation.x = -Math.PI / 2; for (const k of u.knees) k.rotation.x = Math.PI / 2; for (const a of u.arms) a.rotation.x = -0.9; st.position.y -= 0.44; }
+
+// ===== 국어책 괴물: 국어 교과서 표지 속 단발머리 여학생. 팔이 아주 길고 손톱이 날카롭다 =====
+export function makeTextbookGirl() {
+  const g = makeStudent({ girl: true, ribbon: true, hairColor: 0x0d0a0a, faceTex: TX.textbookFaceTex(false) });
+  const u = g.userData; u.faceG = TX.textbookFaceTex(true);
+  g.scale.setScalar(1.12);
+  for (const a of u.arms) { a.clear(); a.add(capsule(0.045, 1.05, M.shirt(), 0, -0.58, 0)); const hand = new THREE.Group(); hand.position.set(0, -1.18, 0); a.add(hand); hand.add(box(0.06, 0.08, 0.03, M.skin(), 0, 0, 0)); for (let f = 0; f < 4; f++) { hand.add(box(0.01, 0.09, 0.01, M.skin(), -0.022 + f * 0.015, -0.08, 0)); const n = mesh(new THREE.ConeGeometry(0.006, 0.09, 6), once('nail', () => std({ color: 0x2a2020, roughness: 0.3 })), -0.022 + f * 0.015, -0.17, 0); n.rotation.x = Math.PI; hand.add(n); } }
+  u.faceY = 1.7 * 1.12;
+  return g;
+}
+
+// ===== 데칼코마니: 벽 속에 숨어 있다가 거대한 손만 내미는 괴물 =====
+export function makeDecal() {
+  const g = new THREE.Group();
+  const patch = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), new THREE.MeshStandardMaterial({ map: TX.tornPaperTex(), transparent: true, roughness: 0.9, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+  g.add(patch);
+  const skin = once('sketch', () => std({ map: TX.sketchSkinTex(), roughness: 0.9 }));
+  const arm = new THREE.Group(); g.add(arm);
+  const fore = capsule(0.17, 2.2, skin, 0, 0, -1.2); fore.rotation.x = Math.PI / 2; arm.add(fore);
+  const hand = new THREE.Group(); hand.position.set(0, 0, 0.1); arm.add(hand);
+  hand.add(mesh(new RoundedBoxGeometry(0.75, 0.14, 0.7, 3, 0.06), skin, 0, 0, 0.3));
+  for (let f = 0; f < 4; f++) { const fg = capsule(0.05, 0.55, skin, -0.27 + f * 0.18, 0, 0.95); fg.rotation.x = Math.PI / 2; hand.add(fg); }
+  const th = capsule(0.055, 0.35, skin, 0.42, 0, 0.35); th.rotation.set(Math.PI / 2, 0, -0.9); hand.add(th);
+  arm.visible = false; arm.scale.setScalar(1.7);
+  g.userData = { patch, arm, hand, faceY: 0 };
+  return g;
+}
+
+// ===== 체육 괴물: 아주 큰 키, 긴 팔다리, 그림자 진 얼굴에 큰 눈과 찢어진 입, 빨간 호루라기 =====
+export function makePE() {
+  const g = new THREE.Group(); const suit = once('track', () => std({ map: TX.tracksuitTex(), roughness: 0.8 }));
+  const legs = [];
+  for (const s of [-1, 1]) { const hip = new THREE.Group(); hip.position.set(s * 0.13, 1.15, 0); g.add(hip); hip.add(capsule(0.08, 0.95, suit, 0, -0.52, 0)); hip.add(box(0.12, 0.08, 0.32, M.shoeWht(), 0, -1.1, 0.06)); legs.push(hip); }
+  g.add(mesh(new RoundedBoxGeometry(0.52, 0.8, 0.28, 4, 0.1), suit, 0, 1.55, 0));
+  const arms = [];
+  for (const s of [-1, 1]) { const sh = new THREE.Group(); sh.position.set(s * 0.3, 1.88, 0); g.add(sh); sh.add(capsule(0.065, 1.05, suit, 0, -0.58, 0)); sh.add(mesh(new RoundedBoxGeometry(0.13, 0.18, 0.06, 2, 0.02), M.skin(), 0, -1.2, 0)); arms.push(sh); }
+  g.add(cyl(0.05, 0.06, 0.12, M.skin(), 0, 2.0, 0));
+  const head = new THREE.Group(); head.position.set(0, 2.17, 0); g.add(head);
+  head.add(mesh(new THREE.SphereGeometry(0.13, 24, 18), std({ color: 0x0a0a0b, roughness: 0.8 })));
+  const face = mesh(new THREE.SphereGeometry(0.1315, 24, 18, Math.PI / 2 - 0.95, 1.9, 0.6, 1.6), new THREE.MeshBasicMaterial({ map: TX.shadowFaceTex(), transparent: true }), 0, 0, 0, false); head.add(face);
+  head.add(box(0.05, 0.025, 0.05, std({ color: 0xd01818, roughness: 0.3 }), 0, -0.05, 0.14));
+  g.userData = { legs, arms, head, faceY: 2.17 };
+  return g;
+}
+export function makeBall(seed) {
+  const g = new THREE.Group();
+  const b = mesh(new THREE.SphereGeometry(0.24, 24, 16), std({ map: TX.ballFaceTex(seed), roughness: 0.6 }), 0, 0.24, 0); g.add(b);
+  g.userData = { ball: b, faceY: 0.24 };
+  return g;
+}
+export function hoop() {
+  const g = new THREE.Group();
+  g.add(box(1.8, 1.05, 0.04, std({ color: 0xeeeeee, roughness: 0.3, transparent: true, opacity: 0.85 }), 0, 3.0 - 0.6, 0));
+  g.add(box(0.6, 0.45, 0.045, std({ color: 0xffffff, roughness: 0.3 }), 0, 2.35, 0.005));
+  const rim = mesh(new THREE.TorusGeometry(0.23, 0.012, 8, 24), std({ color: 0xd2501a, metalness: 0.5, roughness: 0.4 }), 0, 2.05, 0.28); rim.rotation.x = Math.PI / 2; g.add(rim);
+  return g;
+}
+export function ballCart() {
+  const g = new THREE.Group();
+  g.add(box(0.9, 0.6, 0.6, std({ map: TX.metalTex('#555c62'), metalness: 0.6, roughness: 0.5, wireframe: false }), 0, 0.5, 0));
+  for (let i = 0; i < 6; i++) g.add(mesh(new THREE.SphereGeometry(0.12, 14, 10), std({ map: TX.ballFaceTex(i), roughness: 0.6 }), -0.3 + (i % 3) * 0.3, 0.88, -0.12 + Math.floor(i / 3) * 0.24));
+  return g;
+}
+export function lostBox() {
+  const g = new THREE.Group();
+  g.add(box(0.6, 0.4, 0.45, std({ color: 0x9c7a4c, roughness: 0.9 }), 0, 0.2, 0));
+  const pe = box(0.5, 0.08, 0.38, once('track', () => std({ map: TX.tracksuitTex(), roughness: 0.8 })), 0, 0.42, 0); pe.rotation.y = 0.2; g.add(pe);
+  return g;
+}
+export function broom() {
+  const g = new THREE.Group();
+  const st = cyl(0.014, 0.014, 1.2, std({ color: 0x8a6a3a, roughness: 0.7 }), 0, 0.03, 0); st.rotation.z = Math.PI / 2; g.add(st);
+  g.add(box(0.06, 0.1, 0.32, std({ color: 0xb79a5a, roughness: 0.95 }), 0.62, 0.05, 0));
+  return g;
+}
+
 export function setGrin(st, on) { const u = st.userData; u.faceMat.map = on ? u.faceG : u.faceN; u.faceMat.needsUpdate = true; }
 
 // ===== 종이인형: 가운데가 접힌 커다란 종이 사람 =====

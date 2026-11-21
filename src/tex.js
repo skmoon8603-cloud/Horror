@@ -295,3 +295,59 @@ export const foldTex = () => canvasTex(512, 512, (g, w, h) => {
   const gr = g.createLinearGradient(w / 2 - 60, 0, w / 2 + 60, 0); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.5, 'rgba(0,0,0,.85)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(w / 2 - 60, 0, 120, h);
   g.globalAlpha = 0.85; g.drawImage(inkBlotTex().image, w * 0.15, h * 0.2, w * 0.7, h * 0.6); g.globalAlpha = 1;
 });
+
+// ===== 원작 괴물용 텍스처 =====
+// 국어 교과서 삽화 같은 얼굴 (단순한 선, 동그란 볼터치, 웃는 입). wide=true 면 입이 찢어질 듯 커진다
+export const textbookFaceTex = (wide) => canvasTex(512, 512, (g, w, h) => {
+  g.clearRect(0, 0, w, h); const cx = w / 2;
+  for (const s of [-1, 1]) {
+    g.fillStyle = '#151515'; g.beginPath(); g.ellipse(cx + s * 70, 230, 22, wide ? 34 : 28, 0, 0, 7); g.fill();
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(cx + s * 70 + 7, 220, 7, 0, 7); g.fill();
+    g.strokeStyle = '#151515'; g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); g.moveTo(cx + s * 48, 182); g.quadraticCurveTo(cx + s * 70, 172, cx + s * 94, 184); g.stroke();
+    g.fillStyle = 'rgba(240,110,120,.45)'; g.beginPath(); g.ellipse(cx + s * 95, 290, 34, 18, 0, 0, 7); g.fill();
+  }
+  g.strokeStyle = '#a0504a'; g.lineWidth = 4; g.beginPath(); g.moveTo(cx - 6, 270); g.lineTo(cx, 282); g.stroke();
+  if (!wide) { g.strokeStyle = '#7a2020'; g.lineWidth = 7; g.beginPath(); g.arc(cx, 300, 40, 0.25, Math.PI - 0.25); g.stroke(); }
+  else { g.fillStyle = '#2a0505'; g.beginPath(); g.moveTo(cx - 150, 280); g.quadraticCurveTo(cx, 470, cx + 150, 280); g.quadraticCurveTo(cx, 350, cx - 150, 280); g.fill(); g.fillStyle = '#efe6d0'; for (let i = -9; i <= 9; i++) { g.beginPath(); g.moveTo(cx + i * 14 - 6, 300 + (1 - Math.abs(i) / 10) * 30); g.lineTo(cx + i * 14 + 6, 300 + (1 - Math.abs(i) / 10) * 30); g.lineTo(cx + i * 14, 322 + (1 - Math.abs(i) / 10) * 30); g.fill(); } }
+}, { aniso: 8 });
+// 체육 괴물: 그림자 진 얼굴에 커다란 눈, 찢어질 듯한 입
+export const shadowFaceTex = () => canvasTex(512, 512, (g, w, h) => {
+  g.fillStyle = '#060607'; g.fillRect(0, 0, w, h); const cx = w / 2;
+  for (const s of [-1, 1]) { const gr = g.createRadialGradient(cx + s * 80, 210, 0, cx + s * 80, 210, 60); gr.addColorStop(0, '#fffef6'); gr.addColorStop(0.75, '#e8e4d8'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.beginPath(); g.ellipse(cx + s * 80, 210, 58, 64, 0, 0, 7); g.fill(); g.fillStyle = '#000'; g.beginPath(); g.arc(cx + s * 80 + s * -6, 214, 9, 0, 7); g.fill(); }
+  g.fillStyle = '#e8e2d2'; g.beginPath(); g.moveTo(cx - 190, 300); g.quadraticCurveTo(cx, 440, cx + 190, 300); g.quadraticCurveTo(cx, 360, cx - 190, 300); g.fill();
+  g.strokeStyle = '#060607'; g.lineWidth = 4; for (let i = -12; i <= 12; i++) { g.beginPath(); g.moveTo(cx + i * 15, 320 + (1 - Math.abs(i) / 13) * 25); g.lineTo(cx + i * 15, 350 + (1 - Math.abs(i) / 13) * 45); g.stroke(); }
+});
+// 공 괴물: 공이 되어 버린 머리 (비명 지르는 얼굴)
+export const ballFaceTex = (seed = 0) => canvasTex(256, 128, (g, w, h) => {
+  g.fillStyle = ['#c8651e', '#e9e6dc', '#d8d1b0'][seed % 3]; g.fillRect(0, 0, w, h);
+  g.strokeStyle = 'rgba(20,10,5,.7)'; g.lineWidth = 3; g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.moveTo(w / 4, 0); g.lineTo(w / 4, h); g.moveTo(w * 3 / 4, 0); g.lineTo(w * 3 / 4, h); g.stroke();
+  const cx = w / 2; g.fillStyle = '#100808';
+  for (const s of [-1, 1]) { g.beginPath(); g.ellipse(cx + s * 14, 50, 6, 9, 0, 0, 7); g.fill(); }
+  g.beginPath(); g.ellipse(cx, 80, 12, 18, 0, 0, 7); g.fill();
+  g.fillStyle = 'rgba(20,10,5,.8)'; for (let i = 0; i < 30; i++) g.fillRect(cx - 24 + R() * 48, 18 + R() * 10, 2, 8);
+  grain(g, w, h, 16);
+});
+// 스케치북에서 뜯어낸 종이처럼 변한 벽 (데칼코마니가 숨은 자리)
+export const tornPaperTex = () => canvasTex(512, 512, (g, w, h) => {
+  g.clearRect(0, 0, w, h);
+  g.fillStyle = '#ece6d6'; g.beginPath(); for (let a = 0; a < 6.28; a += 0.12) { const r = 210 + (R() - 0.5) * 60; g.lineTo(w / 2 + Math.cos(a) * r, h / 2 + Math.sin(a) * r * 1.1); } g.fill();
+  g.save(); g.clip();
+  for (let i = 0; i < 120; i++) { g.strokeStyle = `rgba(40,40,45,${0.1 + R() * 0.25})`; g.lineWidth = 1 + R(); g.beginPath(); const x = R() * w, y = R() * h; g.moveTo(x, y); g.lineTo(x + 40 + R() * 40, y + (R() - 0.5) * 20); g.stroke(); } // 연필 빗금
+  g.strokeStyle = 'rgba(30,30,35,.6)'; g.lineWidth = 2; for (let k = 0; k < 6; k++) { g.beginPath(); g.moveTo(R() * w, 0); g.lineTo(R() * w, h); g.stroke(); } // 접힌 자국
+  g.restore();
+  g.strokeStyle = 'rgba(120,110,90,.6)'; g.lineWidth = 3; g.beginPath(); for (let a = 0; a < 6.28; a += 0.12) { const r = 205 + (R() - 0.5) * 50; g.lineTo(w / 2 + Math.cos(a) * r, h / 2 + Math.sin(a) * r * 1.1); } g.closePath(); g.stroke();
+});
+// 거대한 손: 연필로 그린 듯한 창백한 피부
+export const sketchSkinTex = () => canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#d9d4c8'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 160; i++) { g.strokeStyle = `rgba(30,30,35,${0.08 + R() * 0.2})`; g.lineWidth = 1; g.beginPath(); const x = R() * w, y = R() * h; g.moveTo(x, y); g.lineTo(x + 18, y + 24); g.stroke(); }
+  stains(g, w, h, 8, '60,50,40', 0.2, 0.2); grain(g, w, h, 14);
+});
+export const gymFloorTex = () => canvasTex(256, 256, (g, w, h) => {
+  for (let i = 0; i < 8; i++) { const b = 150 + R() * 30; g.fillStyle = `rgb(${b + 40},${b + 10},${b - 40})`; g.fillRect(0, i * 32, w, 32); g.fillStyle = 'rgba(60,30,0,.4)'; g.fillRect(0, i * 32, w, 1); g.fillRect(R() * w, i * 32, 1, 32); }
+  for (let k = 0; k < 40; k++) { g.strokeStyle = `rgba(90,50,10,${R() * 0.15})`; g.beginPath(); const y = R() * h; g.moveTo(0, y); g.lineTo(w, y + (R() - 0.5) * 4); g.stroke(); }
+  grain(g, w, h, 12);
+});
+export const tracksuitTex = () => canvasTex(128, 256, (g, w, h) => {
+  g.fillStyle = '#1d2a4f'; g.fillRect(0, 0, w, h); g.fillStyle = '#e8e8e8'; g.fillRect(8, 0, 6, h); g.fillRect(w - 14, 0, 6, h); grain(g, w, h, 10);
+});
