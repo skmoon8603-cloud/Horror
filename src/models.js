@@ -78,6 +78,7 @@ export function makeStudent(o = {}) {
   const hair = mesh(new THREE.SphereGeometry(0.121, 28, 18, Math.PI / 2 + 1.05, Math.PI * 2 - 2.1, 0, back), hairM); hair.scale.set(o.girl ? 1.02 : 0.93, 1.13, 1.06); hair.position.set(0, 0.006, -0.004); head.add(hair);
   const fringe = mesh(new THREE.SphereGeometry(0.1215, 24, 12, Math.PI / 2 - 1.1, 2.2, 0, 1.02), hairM); fringe.scale.copy(hair.scale); fringe.position.set(0, 0.006, -0.002); head.add(fringe);
   if (o.glasses) { const gm = once('glass', () => std({ color: 0x111111, roughness: 0.3, metalness: 0.6 })); for (const sx of [-1, 1]) { const r = mesh(new THREE.TorusGeometry(0.026, 0.004, 6, 16), gm, sx * 0.042, 0.015, 0.108, false); head.add(r); } head.add(box(0.03, 0.004, 0.004, gm, 0, 0.018, 0.112)); }
+  if (o.cast) { const cm = std({ color: 0xf2f2ee, roughness: 0.9 }); arms[0].add(capsule(0.07, 0.34, cm, 0, -0.38, 0)); const sl = box(0.06, 0.4, 0.02, std({ color: 0x5577aa, roughness: 0.8 }), 0.06, 1.3, 0.12); sl.rotation.z = 0.6; g.add(sl); }
   if (o.ribbon) { const rm = std({ color: 0xb01828, roughness: 0.5 }); for (const sx of [-1, 1]) { const b = box(0.07, 0.05, 0.02, rm, sx * 0.04, 0.02, -0.125); b.rotation.z = sx * 0.4; head.add(b); } }
   g.userData = { legs, knees, arms, head, faceMat, faceN, faceG, faceY: 1.7 };
   return g;
@@ -127,6 +128,31 @@ export function curlHand(h, t, walk, grip) { // walk: 손가락으로 걷기, gr
     f.segs[0].rotation.x = -0.15 + w * 0.6 + grip * 0.9; f.segs[1].rotation.x = 0.2 + Math.max(0, w) * 0.5 + grip * 1.2; f.segs[2].rotation.x = 0.15 + grip * 1.0;
   });
   h.userData.thumb[0].rotation.x = grip * 0.8; h.userData.thumb[1].rotation.x = grip * 0.9;
+}
+
+// ===== 과학실 괴물: 상체는 삼각 플라스크, 하체는 알코올램프, 팔은 시험관, 다리는 삼발이, 실험실 가운 =====
+export function makeScience() {
+  const g = new THREE.Group();
+  const glass = once('glassM', () => new THREE.MeshPhysicalMaterial({ color: 0xcfe6ee, roughness: 0.05, metalness: 0, transparent: true, opacity: 0.35, side: THREE.DoubleSide }));
+  const liquid = once('liqM', () => std({ color: 0x1f2a44, roughness: 0.1, transparent: true, opacity: 0.85 })); // 교복 색 액체
+  const steel = M.steel();
+  for (let i = 0; i < 3; i++) { const a = i / 3 * Math.PI * 2; const l = cyl(0.018, 0.018, 1.05, steel, Math.cos(a) * 0.22, 0.5, Math.sin(a) * 0.22, 8); l.rotation.set(Math.sin(a) * 0.25, 0, -Math.cos(a) * 0.25); g.add(l); }
+  const ring = mesh(new THREE.TorusGeometry(0.2, 0.015, 8, 24), steel, 0, 1.0, 0); ring.rotation.x = Math.PI / 2; g.add(ring);
+  g.add(mesh(new THREE.SphereGeometry(0.17, 20, 14), glass, 0, 1.15, 0)); g.add(mesh(new THREE.SphereGeometry(0.15, 16, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), std({ color: 0x8ab0d8, transparent: true, opacity: 0.7 }), 0, 1.15, 0)); // 알코올램프
+  g.add(cyl(0.03, 0.03, 0.08, std({ color: 0x777 }), 0, 1.33, 0));
+  const flame = mesh(new THREE.ConeGeometry(0.05, 0.22, 12), new THREE.MeshBasicMaterial({ color: 0xffa640, transparent: true, opacity: 0.9 }), 0, 1.48, 0, false); g.add(flame);
+  const inner = mesh(new THREE.ConeGeometry(0.025, 0.12, 10), new THREE.MeshBasicMaterial({ color: 0x6aa8ff }), 0, 1.43, 0, false); g.add(inner);
+  const light = new THREE.PointLight(0xff9a40, 1.6, 4, 2); light.position.set(0, 1.5, 0); g.add(light);
+  const coat = mesh(new THREE.CylinderGeometry(0.33, 0.42, 1.05, 24, 1, true, 0.35, Math.PI * 2 - 0.7), std({ color: 0xeeeeea, roughness: 0.8, side: THREE.DoubleSide }), 0, 1.4, 0); g.add(coat);
+  g.add(mesh(new THREE.CylinderGeometry(0.36, 0.33, 0.12, 24, 1, true), std({ color: 0xeeeeea, roughness: 0.8, side: THREE.DoubleSide }), 0, 1.95, 0)); // 깃
+  const flask = mesh(new THREE.CylinderGeometry(0.07, 0.32, 0.55, 28, 1, true), glass, 0, 2.2, 0); g.add(flask);
+  g.add(mesh(new THREE.CylinderGeometry(0.06, 0.27, 0.32, 24), liquid, 0, 2.08, 0));
+  g.add(mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.25, 16, 1, true), glass, 0, 2.6, 0));
+  const arms = [];
+  for (const sx of [-1, 1]) { const sh = new THREE.Group(); sh.position.set(sx * 0.36, 1.85, 0); g.add(sh); const tube = cyl(0.045, 0.045, 0.75, glass, 0, -0.4, 0, 12); sh.add(tube); sh.add(cyl(0.04, 0.04, 0.35, liquid, 0, -0.62, 0, 10)); sh.add(mesh(new THREE.SphereGeometry(0.045, 10, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), glass, 0, -0.77, 0)); arms.push(sh); }
+  const pud = mesh(new THREE.CircleGeometry(1.1, 28), std({ color: 0x1a2236, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.9, depthWrite: false }), 0, 0.006, 0, false); pud.rotation.x = -Math.PI / 2; g.add(pud);
+  g.userData = { flame, inner, light, arms, faceY: 2.2 };
+  return g;
 }
 
 // ===== 체육 괴물: 아주 큰 키, 긴 팔다리, 그림자 진 얼굴에 큰 눈과 찢어진 입, 빨간 호루라기 =====

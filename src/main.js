@@ -11,22 +11,40 @@ const RULES = {
   bell: { text: '수업 종이 울리면 반드시 교실 안에 있을 것. 국어책 괴물은 수업 시간에 돌아다니는 사람만 죽인다.', why: '수업 시간에 복도에 있었다. "수업 시간에 돌아다녔어!!"' },
   run: { text: '복도에서는 떠들지 말 것. 데칼코마니는 눈이 없는 대신 소리를 듣고, 벽과 바닥을 접어 사람을 그림으로 만든다.', why: '"데칼코마니?" 벽이 접혔다. 나는 벽에 그려진 그림이 되었다.' },
   mirror: { text: '화장실 거울 속의 나와 오래 눈을 마주치지 말 것. 도플갱어는 화장실 밖으로는 못 나온다.', why: '거울 속의 내가 웃었다. 그리고 나를 거울 속으로 끌고 들어가 내 몸을 차지했다.' },
-  gym: { text: '체육관 안에서는 반드시 체육복을 입을 것. 호루라기가 울리면 공이 달려든다.', why: '교복을 입은 채 체육관에 들어갔다. 삑— 호루라기 소리와 함께 나도 공이 되었다.' },
+  sci: { text: '과학 실험실 안전 수칙: 실험 중 장난을 치거나 자리를 비우지 않는다. 과학실 괴물 앞에서 등을 돌려 도망치지 말 것. 사고가 나면 큰 소리로 알린다 — 「선생님!」', why: '등을 돌려 도망쳤다. 시험관이 나를 가리키자 몸이 굳었고, 플라스크 속으로 빨려 들어가 알코올램프 불꽃에 녹아내렸다.' },
+  bc: { text: '방송 괴담: 방송이 나오면 귀를 막을 것. 방송을 따라가면 돌아오지 못한다.', why: '방송을 끝까지 들어 버렸다. 정신을 차렸을 땐 이미 방송실 문 앞이었다. 그리고 다시는 돌아오지 못했다.' },
+  gym: { text: '체육관 안에서는 반드시 체육복을 입을 것. 호루라기가 울리면 공이 달려든다.',
+ why: '교복을 입은 채 체육관에 들어갔다. 삑— 호루라기 소리와 함께 나도 공이 되었다.' },
 };
 const NOTES = {
   n1: { t: '칠판', b: '"종이 울리면 반드시 자리에 앉을 것."' },
   n2: { t: '화장실 벽 낙서', b: '거울 속 애들은 단추가 반대쪽에 달려 있어.\n계속 보고 있으면 멈췄다가… 웃어.\n웃으면 화장실 밖으로 도망쳐. 걔는 화장실 밖으로는 못 나와.' },
   n3: { t: '1학년 3반 쪽지', b: '3반은 다 끝났어.\n"데칼코마니?" 하는 소리가 들리면 숨도 쉬지 마.\n걔는 눈이 없어. 소리 나는 곳을 벽째로 접어 버려.\n물건을 던지면 그쪽으로 가. 빗자루든 핸드폰이든.' },
   n4: { t: '교무실 메모', b: '[체육관 교칙] 체육관 안에서는 반드시 체육복 착용.\n분실물 상자에 체육복 한 벌 있음.\n지하 계단 철문 열쇠 — 체육관 농구 골대 아래 보관.' },
-  n5: { t: '과학실 쪽지', b: '사물함에 숨으면 데칼코마니한테 안 들켜.\n근데 안은 좁아서 8초 이상은 못 버텨.\n국어책 괴물은 수업 시간에만 나와. 교실 안에만 있으면 웃으면서 보기만 해.' },
-  n6: { t: '도서실 신문 스크랩', b: '「세계 곳곳에 정체불명의 \'검은 원\' 발생… 실종자 천 명 넘어」\n\n여백에 적힌 글씨:\n안에서의 1년은 밖에서의 하루.\n출구는 맨 아래에 있다.' },
+  n5: { t: '과학 실험실 안전 수칙 (벽에 붙은 종이)', b: '1. 사고가 발생하면 큰 소리로 알린다.\n2. 실험 중 장난을 치거나 자리를 비우지 않는다.\n3. 실험 기구와 약품을 밖으로 가져가지 않는다.\n4. 실험 전·후에 실험대 주변을 정리정돈한다.\n5. 안전장구를 착용하고 긴 머리는 묶는다.\n\n아래에 볼펜으로: 등 돌리지 마. 뛰지 마. 잡히면 선생님 불러.' },
+  n7: { t: '과학실 쪽지', b: '사물함에 숨으면 데칼코마니한테 안 들켜.\n근데 안은 좁아서 8초 이상은 못 버텨.\n국어책 괴물은 수업 시간에만 나와. 교실 안에만 있으면 웃으면서 보기만 해.' },
+  n6: { t: '1학년 1반 책상 위 신문 스크랩', b: '「세계 곳곳에 정체불명의 \'검은 원\' 발생… 실종자 천 명 넘어」\n\n여백에 적힌 글씨:\n안에서의 1년은 밖에서의 하루.\n출구는 맨 아래에 있다.' },
 };
-const NPCS = [ // 1학년 4반 친구들 (앉아 있는 책상 칸)
-  { name: '남정우', x: 5, y: 5, o: { glasses: true }, lines: ['도윤아, 종 치기 전에 무조건 교실로 돌아와. 선생님처럼 되기 싫으면.', '교무실 분실물 상자에 체육복이 있었던 것 같아. 체육관은 체육복 없이 들어가면 안 돼.', '출구는 맨 아래라고 했어. 지하로 가는 계단을 찾아.'] },
-  { name: '임선아', x: 9, y: 5, o: { girl: true, hairColor: 0x2a1a12 }, lines: ['복도에선 절대 소리 내지 마. 3반이… 전부 벽에 그려져 있었어.', '걔한테 쫓기면 뭐든 던져. 소리 나는 쪽으로 가니까.'] },
-  { name: '최원균', x: 3, y: 7, o: {}, big: true, lines: ['나, 나는 여기서 안 나갈 거야…', '아까 복도에서 목소리 들렸어. 사람 목소리였는데… 사람 아니었던 것 같아.'] },
-  { name: '전석오', x: 11, y: 3, o: {}, lines: ['화장실 거울 보지 마. 거울 속 애들이 우리보다 늦게 움직였어.', '괴물이든 뭐든 다 같이 덮치면 이길 수 있을 줄 알았는데…'] },
-  { name: '한수진', x: 9, y: 7, o: { girl: true, hairColor: 0x3a2418 }, lines: ['괴물들은 다 교칙이랑 관련 있는 것 같아. 교칙만 지키면 살 수 있어.', '국어책 괴물은 교실 안까지는 안 들어와. 수업 시간엔 무조건 여기 있어.'] },
+const NPCS = [ // 1학년 4반 (A·B·C·D조). 책상 칸 위치
+  { name: '최원균 (A조)', x: 3, y: 7, o: {}, big: true, lines: ['나, 나는 여기서 안 나갈 거야…', '첫 탐색 때 혼자 도망쳐서… 미안했어, 도윤아.'] },
+  { name: '임선아 (A조)', x: 5, y: 7, o: { girl: true, hairColor: 0x2a1a12 }, lines: ['복도에선 절대 소리 내지 마. 3반이… 전부 벽에 그려져 있었어.', '데칼코마니한테 쫓기면 뭐든 던져. 소리 나는 쪽으로 가니까.'] },
+  { name: '최서정 (A조)', x: 11, y: 7, o: { girl: true, hairColor: 0x5a3a22 }, big: true, lines: ['화장실에서 나온 예림이 손이… 이상했어. 진짜 예림이는 거울 속에서 살려 달라고 했고.'] },
+  { name: '김태현 (B조)', x: 3, y: 3, o: { hairColor: 0xc8a048, cast: true }, lines: ['팔은 신경 쓰지 마. 체육관 갈 땐 체육복 꼭 챙겨. 상의든 하의든 하나만 입어도 된대.'] },
+  { name: '남정우 (B조)', x: 5, y: 5, o: { glasses: true }, lines: ['도윤아, 종 치기 전에 무조건 교실로 돌아와. 선생님처럼 되기 싫으면.', '조별로 구역 나눠서 지도 만들고 있어. 넌 A조야. 가방에 지도 넣어 놨어.', '교무실 분실물 상자에 체육복 상의가 있었고, 교실 뒤 사물함 쪽에 하의가 있을 거야.'] },
+  { name: '한수진 (B조)', x: 9, y: 5, o: { girl: true, hairColor: 0x3a2418 }, lines: ['괴물들은 다 교칙이랑 관련 있는 것 같아. 교칙만 지키면 살 수 있어.', '국어책 괴물은 교실 안까지는 안 들어와. 수업 시간엔 무조건 여기 있어.'] },
+  { name: '최나리 (B조)', x: 11, y: 5, o: { girl: true, hairColor: 0x221510 }, lines: ['3반에 친구 있었는데… 연락이 안 돼. 핸드폰은 켜지는데 신호가 하나도 안 잡혀.'] },
+  { name: '이소한 (C조)', x: 9, y: 3, o: { hairColor: 0x2a2a30 }, lines: ['우리 삼촌은 검은 원에서 나온 적 있어. 출구는 맨 아래래.', '안에서의 1년이 밖에서는 하루래. 그러니까 굶어 죽을 걱정은 없어.', '과학실 괴물 앞에서는 절대 등 돌리지 마.'] },
+  { name: '김지은 (C조)', x: 11, y: 3, o: { girl: true, glasses: true, hairColor: 0x6a4a2a }, lines: ['과학실 괴물한테 잡히면 크게 소리쳐. 「선생님!」 하고. 사고가 나면 큰 소리로 알리라는 수칙이 있거든.', '근데 소리치면… 데칼코마니가 들을 거야.'] },
+  { name: '최현준 (D조)', x: 3, y: 5, o: { hairColor: 0x7a6a90 }, lines: ['화장실에서 나온 애 손을 봤어. 단추가 반대쪽이었어. 거울 속 애들은 화장실 밖으론 못 나와.'] },
+  { name: '양소연 (D조)', x: 9, y: 7, o: { girl: true, hairColor: 0x8a8a8e }, lines: ['방송 나오면 무조건 귀 막아. 2학년 선배들이 방송 듣고 선생님 따라 다 나가 버렸대.'] },
+  { name: '전석오 (D조)', x: 5, y: 3, o: {}, lines: ['괴물이든 뭐든 다 같이 덮치면 이길 수 있을 줄 알았는데…', '화장실 거울 오래 보지 마. 진짜야.'] },
+];
+const NPCS_21 = [ // 지하 1층: 2학년 1반 생존자들
+  { name: '김도현 (2-1, 누나)', o: { girl: true, hairColor: 0x2a1810 }, lines: ['도윤아…! 너 살아 있었구나. 난 그때 보건실에 있어서 살았어.', '우리 반 절반은 방송 듣고 담임 선생님 따라 나갔어. 방송 나오면 무조건 귀 막아.', '같이 내려가자. 출구는 맨 아래야.'] },
+  { name: '2학년 1반 반장', o: { glasses: true }, lines: ['여기 교실도 이제 안전하지 않을 거야…', '체육관에서 셋이나 당했어. 체육복 안 입은 채로.'] },
+  { name: '김율 (2-1)', o: {}, lines: ['방송이 끝날 때까지 귀만 막고 있으면 괜찮아.'] },
+  { name: '2학년 학생', o: { girl: true, hairColor: 0x3a2a1a }, lines: ['…집에 가고 싶어.'] },
+  { name: '2학년 학생', o: {}, lines: ['계단 찾으면 우리도 데려가 줘.'] },
 ];
 
 // ===== 맵 (1칸 = 1.2m) =====
@@ -38,7 +56,7 @@ const ix = (x, y) => y * W + x;
 const tt = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? WALL : T[ix(x, y)];
 const rr = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? 0 : RM[ix(x, y)];
 function room(x0, y0, x1, y1, r) { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { T[ix(x, y)] = FLOOR; RM[ix(x, y)] = r; } }
-const ROOMS = ['복도', '1-4', '화장실', '1-3', '교무실', '계단', '체육관', '과학실', '도서실'];
+const ROOMS = ['복도', '1-4', '화장실', '1-3', '교무실', '계단', '체육관', '과학실', '1-1'];
 room(1, 11, 56, 14, 0);
 room(1, 1, 13, 9, 1); room(15, 1, 22, 9, 2); room(24, 1, 35, 9, 3); room(37, 1, 46, 9, 4); room(48, 1, 56, 9, 5);
 room(1, 16, 16, 25, 6); room(18, 16, 34, 25, 7); room(36, 16, 56, 25, 8);
@@ -54,7 +72,7 @@ const solidList = [
   [2, 24],
   [20, 18], [21, 18], [22, 18], [26, 18], [27, 18], [28, 18], [31, 18], [32, 18], [20, 22], [21, 22], [22, 22], [26, 22], [27, 22], [28, 22], [31, 22], [32, 22],
 ];
-for (const y of [18, 21, 24]) { for (let x = 38; x <= 44; x++) solidList.push([x, y]); for (let x = 48; x <= 54; x++) solidList.push([x, y]); }
+for (const y of [18, 21, 24]) for (const x of [38, 40, 43, 49, 51, 54]) solidList.push([x, y]); // 1학년 1반 책상
 for (let y = 5; y <= 9; y++) for (const x of [21, 22]) solidList.push([x, y]); // 화장실 칸
 for (const [x, y] of solidList) T[ix(x, y)] = DESK;
 let LOCKERS = [[4, 11], [11, 11], [21, 11], [33, 11], [45, 11], [13, 14], [20, 14], [31, 14], [39, 14], [53, 14]].map(([x, y]) => [x, y, 0, y === 11 ? 1 : -1]); // [x, y, 바라보는 방향 x, y]
@@ -62,8 +80,8 @@ for (const [x, y] of LOCKERS) T[ix(x, y)] = LOCKER;
 let stairsOpen = false;
 const solid = (x, y) => { const t = tt(x, y); return t === WALL || t === DESK || t === LOCKER || t === MIRROR || (t === LOCK && !stairsOpen); };
 const monsterOk = (x, y) => !solid(x, y) && rr(x, y) !== 1;
-const NOTE_SPOTS = { n2: [16.5, 8.5], n3: [28.5, 1.6], n4: [45.5, 2.5], n5: [33.5, 24.5], n6: [55.5, 16.5] };
-const KEY_SPOT = [8.5, 25.3], PE_SPOT = [38.5, 8.3], PE_MON = [8.5, 21.5];
+const NOTE_SPOTS = { n2: [16.5, 8.5], n3: [28.5, 1.6], n4: [45.5, 2.5], n5: [33.5, 24.5], n6: [55.5, 16.5], n7: [19.5, 16.6] };
+const KEY_SPOT = [8.5, 25.3], PE2_SPOT = [12.5, 9.3], PE_SPOT = [38.5, 8.3], PE_MON = [8.5, 21.5];
 const BROOM_SPOTS = [[2.5, 13.6], [23.5, 13.6], [47.5, 11.5]];
 
 // ===== 저장 =====
@@ -117,7 +135,7 @@ const floorMats = {
   tile: std({ map: TX.tileTex(), roughness: 0.25 }),
   gym: std({ map: TX.gymFloorTex(), roughness: 0.35 }),
 };
-const floorKey = (x, y) => { const t = tt(x, y); if (t === DOOR || t === LOCK) return 'vinyl'; return ['vinyl', 'wood', 'tile', 'wood', 'vinylWarm', 'vinyl', 'gym', 'vinylCold', 'woodDark'][rr(x, y)]; };
+const floorKey = (x, y) => { const t = tt(x, y); if (t === DOOR || t === LOCK) return 'vinyl'; return ['vinyl', 'wood', 'tile', 'wood', 'vinylWarm', 'vinyl', 'gym', 'vinylCold', 'wood'][rr(x, y)]; };
 const geos = { walls: [] }; for (const k in floorMats) geos[k] = [];
 const at = (g, x, y, z) => { g.translate(x, y, z); return g; };
 for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -162,17 +180,19 @@ for (const [x, y] of solidList) {
   else if (r === 4) place(MD.officeDesk(), cx0, cy0, y === 3 ? 0 : Math.PI);
   else if (r === 6) place(MD.ballCart(), cx0, cy0, 0.3);
   else if (r === 7) place(MD.labBench(), cx0, cy0);
-  else if (r === 8) place(MD.shelf(), cx0, cy0);
+  else if (r === 8) { const d = place(MD.studentDesk(), cx0, cy0, (Math.random() - 0.5) * 2); if (Math.random() < 0.5) { d.rotation.z = Math.PI / 2; d.position.y = 0.36; } }
 }
 place(MD.teacherDesk(), 7.5, 2.5);
 { const ct = TX.canvasTex(512, 640, (g, w, h) => { g.clearRect(0, 0, w, h); g.strokeStyle = 'rgba(240,240,240,.8)'; g.lineWidth = 5; g.strokeRect(10, 10, w - 20, h - 20); g.beginPath(); g.moveTo(10, h / 2); g.lineTo(w - 10, h / 2); g.stroke(); g.beginPath(); g.arc(w / 2, h / 2, 60, 0, 7); g.stroke(); for (const y of [10, h - 10]) { g.beginPath(); g.arc(w / 2, y, 140, y < h / 2 ? 0 : Math.PI, y < h / 2 ? Math.PI : 7); g.stroke(); } });
   const c = new THREE.Mesh(new THREE.PlaneGeometry(15 * S, 9.6 * S), std({ map: ct, transparent: true, depthWrite: false, roughness: 0.4 })); c.rotation.x = -Math.PI / 2; c.position.set(9 * S, 0.005, 21 * S); scene.add(c); }
 place(MD.hoop(), 8.5, 16.08); place(MD.hoop(), 8.5, 25.92, Math.PI);
 place(MD.lostBox(), PE_SPOT[0], PE_SPOT[1] + 0.3);
+for (const [x, y, r] of [[41.5, 19.5, 0.9], [46.5, 22.5, 1.2], [52.5, 17.5, 0.8], [45.5, 13.5, 0.7], [37.5, 23.5, 0.6]]) { const pd = new THREE.Mesh(new THREE.CircleGeometry(r, 24), std({ color: 0x1a2236, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.85, depthWrite: false })); pd.rotation.x = -Math.PI / 2; pd.position.set(x * S, 0.005, y * S); scene.add(pd); } // 녹아내린 1반 학생들
+
 { const blood = new THREE.Mesh(new THREE.CircleGeometry(0.9, 24), std({ map: TX.canvasTex(256, 256, (g, w, h) => { g.clearRect(0, 0, w, h); for (let i = 0; i < 30; i++) { const gr = g.createRadialGradient(128 + (Math.random() - 0.5) * 120, 128 + (Math.random() - 0.5) * 120, 0, 128, 128, 30 + Math.random() * 40); gr.addColorStop(0, 'rgba(70,5,5,.7)'); gr.addColorStop(1, 'rgba(70,5,5,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); } }), transparent: true, depthWrite: false, roughness: 0.2 })); blood.rotation.x = -Math.PI / 2; blood.position.set(7.5 * S, 0.004, 12.2 * S); scene.add(blood); } // 선생님이 쓰러진 자리
 // 도서실 책 (인스턴스로 한 번에 그림)
 {
-  const spots = solidList.filter(([x, y]) => rr(x, y) === 8); const N = spots.length * 4 * 2 * 22;
+  const spots = []; const N = 1;
   const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), std({ map: TX.bookSpineTex(), roughness: 0.8 }), N);
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), col = new THREE.Color(); let n = 0;
   const pal = [0x7a2a2a, 0x2a3f6a, 0x2f5a3a, 0x6a5a2a, 0x4a2a5a, 0x8a7a6a, 0x1f1f1f, 0x9a4a2a];
@@ -283,6 +303,7 @@ for (const id in NOTE_SPOTS) { const [x, y] = NOTE_SPOTS[id]; const m = new THRE
 const keyObj = MD.keyModel(); scene.add(keyObj);
 const npcModels = [];
 const peItem = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.07, 0.38), std({ map: TX.tracksuitTex(), roughness: 0.8 })); peItem.position.set(PE_SPOT[0] * S, 0.45, (PE_SPOT[1] + 0.3) * S); peItem.rotation.y = 0.2; scene.add(peItem);
+const peItem2 = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.06, 0.32), std({ map: TX.tracksuitTex(), roughness: 0.8 })); peItem2.position.set(PE2_SPOT[0] * S, 0.03, PE2_SPOT[1] * S); peItem2.rotation.y = -0.4; scene.add(peItem2);
 const broomObjs = BROOM_SPOTS.map(([x, y]) => { const b = MD.broom(); b.position.set(x * S, 0, y * S); b.rotation.y = Math.random() * 3; b.userData.x = x; b.userData.y = y; scene.add(b); return b; });
 for (const n of NPCS) { // 1학년 4반 친구들
   const st = MD.makeStudent(n.o); if (n.big) st.scale.set(1.12, 1.03, 1.12);
@@ -368,7 +389,15 @@ function genLevel(depth) {
   const dsp = []; for (const r of rooms.filter((r) => r.type === 3)) for (let x = r.x; x < r.x + r.w; x += 2) if (T2[ix(x, r.y - 1)] === WALL) dsp.push([x + 0.5, r.y, 0]);
   dsp.slice(0, 10).forEach(([x, y, sd], i) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 1.5), std({ map: drawTexCache[i] || (drawTexCache[i] = TX.pencilPersonTex(i + 1, false)), transparent: true, roughness: 0.9, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 })); m.position.set(x * S, 1.15, y * S + 0.012); m.rotation.z = (R() - 0.5) * 0.15; grp.add(m); });
   const fl2 = []; for (let i = 0; i < Math.min(5, lampL.length); i++) { const k = (R() * lampL.length) | 0; const p = lampL[k].boundingBox || (lampL[k].computeBoundingBox(), lampL[k].boundingBox); const c = new THREE.Vector3(); p.getCenter(c); const pl = new THREE.PointLight(0xfff2c0, 4, 10, 2); pl.position.set(c.x, WALL_H - 0.3, c.z); grp.add(pl); fl2.push({ p: pl, base: 4, t: R() * 4, l: null }); }
-  const L = { depth, T: T2, RM: RM2, LOCKERS: lockers, start, group: grp, spawn, stair, door, flick: fl2 };
+  const npcs = [];
+  if (depth === 1) { // 2학년 1반 생존자 5명
+    const r1 = rooms[1], desks = []; for (let y = r1.y; y < r1.y + r1.h; y++) for (let x = r1.x; x < r1.x + r1.w; x++) if (T2[ix(x, y)] === DESK) desks.push([x, y]);
+    NPCS_21.forEach((n, i) => { const dk = desks[i]; const px = dk ? dk[0] + 0.5 : r1.x + 1.5 + i, py = dk ? dk[1] + 0.85 : r1.y + r1.h - 1.5;
+      const st = MD.makeStudent(n.o); st.position.set(px * S, 0, (py - 0.35) * S + 0.42 - 0.18); st.rotation.y = Math.PI; if (dk) MD.sit(st); else st.userData.standing = true; st.traverse((o) => { if (o.isMesh) o.castShadow = true; }); grp.add(st);
+      npcs.push({ model: st, px, py, name: n.name, lines: n.lines, i: 0 }); });
+    const sg = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.19), std({ map: TX.signTex('2-1'), roughness: 0.7, side: THREE.DoubleSide })); sg.position.set((r1.x + r1.w / 2) * S, 2.5, r1.y * S + 0.02); grp.add(sg);
+  }
+  const L = { depth, T: T2, RM: RM2, LOCKERS: lockers, start, group: grp, spawn, stair, door, flick: fl2, npcs, rooms };
   levels[depth] = L; return L;
 }
 let level = 0, LV = LV0, transitioning = false;
@@ -389,8 +418,8 @@ function descend() {
 // ===== 입력 =====
 const keys = {};
 let yaw = 0, pitch = 0;
-addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); keys[k] = true; if (k === 'c') toggleSneak(); if (k === 'e') hideAct(); if (k === 'f' || k === 'q') throwItem(); });
-addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+addEventListener('keydown', (e) => { const k = e.key.toLowerCase(); keys[k] = true; if (k === 'c') toggleSneak(); if (k === 'e') hideAct(); if (k === 'f' || k === 'q') throwItem(); if (k === 'g') shout(); if (k === 'h') { earsHeld = true; $('earB').classList.add('on'); } if (k === 'i' || k === 'b') openBag(); if (k === 'm') openMap(); });
+addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; if (e.key.toLowerCase() === 'h') { earsHeld = false; $('earB').classList.remove('on'); } });
 const joy = { id: null, ox: 0, oy: 0, x: 0, y: 0 }, looks = new Map();
 cv.addEventListener('pointerdown', (e) => {
   audioInit();
@@ -416,6 +445,9 @@ function toggleSneak() { sneak = !sneak; sneakB.classList.toggle('on', sneak); }
 sneakB.addEventListener('pointerdown', (e) => { e.preventDefault(); audioInit(); toggleSneak(); });
 hideB.addEventListener('pointerdown', (e) => { e.preventDefault(); hideAct(); });
 $('throwB').addEventListener('pointerdown', (e) => { e.preventDefault(); throwItem(); });
+$('shoutB').addEventListener('pointerdown', (e) => { e.preventDefault(); shout(); });
+const earOn = (e) => { e.preventDefault(); earsHeld = true; $('earB').classList.add('on'); }, earOff = () => { earsHeld = false; $('earB').classList.remove('on'); };
+$('earB').addEventListener('pointerdown', earOn); $('earB').addEventListener('pointerup', earOff); $('earB').addEventListener('pointercancel', earOff); $('earB').addEventListener('pointerleave', earOff);
 let toastT = 0;
 function toast(s, ms = 2400) { const t = $('toast'); t.innerHTML = s; t.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => (t.style.opacity = 0), ms); }
 const modal = (id, on) => { $(id).classList.toggle('show', on); if (on && document.pointerLockElement) document.exitPointerLock(); };
@@ -469,13 +501,14 @@ function panOf(x, y) { const dx = x - P.x, dy = y - P.y; const rx = Math.cos(yaw
 // ===== 게임 상태 =====
 let P, mons, phase, phaseT, period, runTime, hidden, hideT, alive, started = false, killer = null, deadT = 0, hasKey = false, keyPos, stepPh = 0, eye = 1.6;
 let mir = { st: 'normal', t: 0, hist: [], pose: null, cd: 0, chaser: null };
+let inv = { phone: 1, broom: 0, peTop: false, peBottom: false, map: true }, throwSel = 'broom', frozen = false, bc = null, earsHeld = false, bcNext = 1;
 let hasPE = false, throws = 1, thrown = [], peMon = null, gymT = 0, whistled = false, talkT = 0, lastTalk = null;
 const wcOk = (x, y) => !solid(x, y) && (rr(x, y) === 2 || (x === 18 && y === 10)); // 도플갱어는 화장실 밖으로 못 나온다
 const gymOk = (x, y) => !solid(x, y) && rr(x, y) === 6;
 const breakLen = (p) => Math.max(35, 62 - p * 5), CLASS_LEN = 22;
 const trailGeo = new THREE.CylinderGeometry(0.2, 0.23, 1, 10, 1, true);
 function addMon(kind, x, y) {
-  const model = kind === 'doll' ? MD.makeGiantHand() : kind === 'monitor' ? MD.makeTextbookGirl() : kind === 'pe' ? MD.makePE() : kind === 'ball' ? MD.makeBall((Math.random() * 3) | 0) : MD.makeStudent();
+  const model = kind === 'sci' ? MD.makeScience() : kind === 'doll' ? MD.makeGiantHand() : kind === 'monitor' ? MD.makeTextbookGirl() : kind === 'pe' ? MD.makePE() : kind === 'ball' ? MD.makeBall((Math.random() * 3) | 0) : MD.makeStudent();
   if (kind === 'mirror') MD.setGrin(model, true);
   model.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   scene.add(model);
@@ -492,30 +525,33 @@ function reset() {
   if (mons) for (const m of mons.slice()) removeMon(m);
   P = { x: LV.start[0], y: LV.start[1] }; yaw = 0; pitch = 0;
   mons = [];
-  phase = 'break'; period = 1; phaseT = breakLen(1); hidden = null; hideT = 0; alive = true; killer = null; deadT = 0;
+  phase = 'break'; period = 1; phaseT = breakLen(1); hidden = null; hideT = 0; alive = true; killer = null; deadT = 0; frozen = false; endBroadcast(); bcNext = 2 + ((Math.random() * 2) | 0);
   for (const p of thrown) scene.remove(p.obj); thrown = []; noiseEvents = [];
   if (fold) endFold();
   $('vent').classList.remove('show');
   if (level === 0) {
     runTime = 0;
-    addMon('doll', 30.5, 5.5); peMon = addMon('pe', PE_MON[0], PE_MON[1]); peMon.state = 'idle';
-    stairsOpen = false; lockDoor.visible = true; lockDoor.position.y = 1.125; hasKey = false; hasPE = false; throws = 1; gymT = 0; whistled = false;
+    addMon('doll', 30.5, 5.5); peMon = addMon('pe', PE_MON[0], PE_MON[1]); peMon.state = 'idle'; addMon('sci', 46.5, 20.5);
+    stairsOpen = false; lockDoor.visible = true; lockDoor.position.y = 1.125; hasKey = false; hasPE = false; inv = { phone: 1, broom: 0, peTop: false, peBottom: false, map: true }; gymT = 0; whistled = false; peItem2.visible = true;
     keyPos = KEY_SPOT; keyObj.visible = true; keyObj.position.set(keyPos[0] * S, 0.008, keyPos[1] * S);
     peItem.visible = true; for (const b of broomObjs) b.visible = true;
     for (const id in noteMeshes) noteMeshes[id].visible = !save.notes.includes(id);
     mir = { st: 'normal', t: 0, hist: [], pose: null, cd: 0, chaser: null }; MD.setGrin(dop, false); crackMesh.visible = false; glass.visible = true;
     buildDrawings();
   } else {
-    peMon = null; throws = Math.max(throws, 1 + (level > 2 ? 1 : 0));
+    peMon = null; inv.broom = Math.max(inv.broom, 1);
     const n = Math.min(3, 1 + Math.floor(level / 2));
     for (let i = 0; i < n; i++) { const p = farSpawn(); addMon('doll', p[0], p[1]); }
+    if (level >= 2) { const p = farSpawn(); addMon('sci', p[0], p[1]); }
   }
   updKey(); monitorSteps(null); playerSteps(0); $('floorChip').textContent = floorName(level);
 }
 function updKey() {
+  hasPE = inv.peTop || inv.peBottom; const nT = inv.phone + inv.broom;
   $('keyChip').textContent = (hasKey ? '🔑 열쇠' : '🔑 없음') + ' · ' + (hasPE ? '👕 체육복' : '👔 교복');
-  $('keyChip').classList.toggle('got', hasKey); $('throwB').innerHTML = '<span>' + (throws ? '📱' : '✋') + '</span>던지기 ' + throws;
-  $('throwB').style.opacity = throws ? 1 : 0.4;
+  $('keyChip').classList.toggle('got', hasKey);
+  const sel = inv[throwSel] > 0 ? throwSel : inv.broom > 0 ? 'broom' : 'phone';
+  $('throwB').innerHTML = '<span>' + (nT ? (sel === 'broom' ? '🧹' : '📱') : '✋') + '</span>던지기 ' + nT; $('throwB').style.opacity = nT ? 1 : 0.4;
 }
 
 // ===== 길찾기 =====
@@ -566,12 +602,15 @@ function update(dt) {
   // 이동
   let mx = joy.x, my = joy.y;
   if (keys.w || keys.arrowup) my = -1; if (keys.s || keys.arrowdown) my = 1; if (keys.a || keys.arrowleft) mx = -1; if (keys.d || keys.arrowright) mx = 1;
-  const ml = Math.hypot(mx, my); let noiseR = 0;
+  let noiseR = 0;
   const running = (runHeld || keys.shift) && !sneak && my < 0.3;
+  const ml = Math.hypot(mx, my) * (frozen || (bc && bc.pulled) ? 0 : 1);
+  if (bc && bc.pulled) { if (!bc.path || !bc.path.length || (bc.pt -= dt) < 0) { bc.pt = 1; bc.path = bfs(P.x, P.y, bc.tx, bc.ty, (x, y) => !solid(x, y)) || []; } const nx = bc.path[0] || [bc.tx, bc.ty]; if (Math.hypot(nx[0] - P.x, nx[1] - P.y) < 0.3) bc.path.shift(); const dx = nx[0] - P.x, dy = nx[1] - P.y, dl = Math.hypot(dx, dy) || 1; mx = 0; my = 0; moveP(dx / dl * 1.5 * dt, dy / dl * 1.5 * dt); yaw += ((Math.atan2(-dx, -dy) - yaw + Math.PI * 3) % (Math.PI * 2) - Math.PI) * dt * 2; }
+  if (frozen) { mx = 0; my = 0; }
   if (hidden) { hideT += dt; if (hideT > 8) { leaveHide(); toast('숨이 막혀서 뛰쳐나왔다!'); noiseR = 6; } }
   else if (ml > 0.15) {
     const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
-    const sp = running ? 3.9 : sneak ? 1.1 : 2.2, k = sp * dt * Math.min(1, ml) / ml;
+    const sp = (running ? 3.9 : sneak ? 1.1 : 2.2) * (earsHeld ? 0.5 : 1), k = sp * dt * Math.min(1, ml) / ml;
     moveP((fx * -my + rx * mx) * k, (fz * -my + rz * mx) * k);
     noiseR = running ? 7.5 : sneak ? 0.6 : 3;
     const prev = stepPh; stepPh += dt * (running ? 11 : sneak ? 4.5 : 7.5);
@@ -585,8 +624,9 @@ function update(dt) {
   if (level === 0) {
   for (const id in NOTE_SPOTS) if (noteMeshes[id].visible) { const [x, y] = NOTE_SPOTS[id]; if (Math.hypot(x - P.x, y - P.y) < 0.75) { noteMeshes[id].visible = false; if (!save.notes.includes(id)) { save.notes.push(id); persist(); } showNote(id); } }
   if (!hasKey && Math.hypot(keyPos[0] - P.x, keyPos[1] - P.y) < 0.75) { hasKey = true; keyObj.visible = false; updKey(); noise(0.4, 0.5, 4000, 0, 3); P.noise = 6; toast('🔑 지하 계단 열쇠를 주웠다! <br>찰랑— 소리가 울렸다…'); }
-  if (!hasPE && peItem.visible && Math.hypot(PE_SPOT[0] - P.x, PE_SPOT[1] - P.y) < 0.9) { hasPE = true; peItem.visible = false; updKey(); toast('👕 분실물 상자에서 체육복을 꺼내 갈아입었다'); }
-  for (const b of broomObjs) if (b.visible && Math.hypot(b.userData.x - P.x, b.userData.y - P.y) < 0.8) { b.visible = false; throws++; updKey(); toast('🧹 빗자루를 주웠다 (던지기 +1)', 1500); }
+  if (peItem.visible && Math.hypot(PE_SPOT[0] - P.x, PE_SPOT[1] - P.y) < 0.9) { inv.peTop = true; peItem.visible = false; updKey(); toast('👕 분실물 상자에서 체육복 상의를 꺼내 입었다'); }
+  if (peItem2.visible && Math.hypot(PE2_SPOT[0] - P.x, PE2_SPOT[1] - P.y) < 0.8) { inv.peBottom = true; peItem2.visible = false; updKey(); toast('👖 교실 뒤에서 체육복 하의를 찾아 입었다'); }
+  for (const b of broomObjs) if (b.visible && Math.hypot(b.userData.x - P.x, b.userData.y - P.y) < 0.8) { b.visible = false; inv.broom++; updKey(); toast('🧹 빗자루를 주웠다 (가방에 넣음)', 1500); }
   if (!stairsOpen && Math.hypot(52.5 - P.x, 11.5 - P.y) < 1.3) {
     if (hasKey) { stairsOpen = true; noise(0.8, 0.6, 600, 0, 2); toast('철문이 열렸다. 아래로 내려가는 계단이다…'); }
     else toast('🔒 지하 계단 철문이 잠겨 있다. 열쇠가 필요하다', 1200);
@@ -599,8 +639,11 @@ function update(dt) {
 
   // 사물함 버튼
   hideB.style.visibility = (hidden || nearLocker()) ? 'visible' : 'hidden';
+  $('shoutB').style.visibility = frozen || mons.some((m) => m.kind === 'sci' && m.state !== 'retreat' && Math.hypot(m.x - P.x, m.y - P.y) < 10) ? 'visible' : 'hidden';
   hideB.innerHTML = hidden ? '<span>🚪</span>나가기' : '<span>🚪</span>숨기';
 
+  { const sn = LV.seen || (LV.seen = new Uint8Array(W * H)); for (let y = Math.max(0, (P.y | 0) - 4); y <= Math.min(H - 1, (P.y | 0) + 4); y++) for (let x = Math.max(0, (P.x | 0) - 4); x <= Math.min(W - 1, (P.x | 0) + 4); x++) sn[ix(x, y)] = 1; } // 지도 만들기
+  updateBroadcast(dt); if (!alive) return;
   if (level === 0) updateMirror(dt);
   if (!alive) return;
   updateFold(dt);
@@ -640,6 +683,7 @@ function update(dt) {
       if (m.life <= 0) { removeMon(m); mir.chaser = null; toast('그 애가… 사라졌다', 1800); continue; }
       if (!hidden && d < 0.6) return die('mirror', m);
     }
+    else if (m.kind === 'sci') { if (updateSci(m, d, dt)) return; }
     else if (m.kind === 'pe') { // 체육 괴물: 체육관 밖으로는 나오지 않는다
       const inGym = rr(P.x | 0, P.y | 0) === 6;
       if (inGym) { m.fx = P.x - m.x; m.fy = P.y - m.y; const l = Math.hypot(m.fx, m.fy) || 1; m.fx /= l; m.fy /= l; }
@@ -658,11 +702,61 @@ function update(dt) {
   }
   noiseEvents = noiseEvents.filter((e) => (e.t -= dt) > 0);
   updateThrown(dt);
-  if (level === 0) updateTalk(dt);
+  updateTalk(dt);
   monitorSteps(monitor);
   beatT -= dt;
   if (nearest < 8 && beatT <= 0) { heartbeat(); beatT = 0.35 + nearest / 8 * 0.9; }
 }
+// ===== 과학실 괴물: 실험 중 자리를 비우면(등 돌려 도망치면) 시험관으로 지목 → 플라스크로 빨아들여 알코올램프로 녹인다 =====
+const sciOk = (x, y) => !solid(x, y) && rr(x, y) !== 1 && (level || rr(x, y) === 7 || rr(x, y) === 8 || (rr(x, y) === 0 && x > 24) || tt(x, y) === DOOR);
+function updateSci(m, d, dt) {
+  const md = m.model.userData;
+  if (m.state === 'retreat') { m.retreatT -= dt; if (m.pathT <= 0) { m.pathT = 1; const p = level ? farSpawn() : [50.5, 22.5]; m.path = bfs(m.x, m.y, p[0], p[1], sciOk) || []; } follow(m, 0.9, dt); if (m.retreatT <= 0) m.state = 'wander'; return false; }
+  if (m.state === 'lock') {
+    m.lockT += dt; frozen = true;
+    m.fx = P.x - m.x; m.fy = P.y - m.y; const l = Math.hypot(m.fx, m.fy) || 1; m.fx /= l; m.fy /= l;
+    if (m.lockT > 1.1) { const k = Math.min(1, (m.lockT - 1.1) * 0.8); moveP(-m.fx * 1.6 * dt * k, -m.fy * 1.6 * dt * k); } // 플라스크 쪽으로 빨려 간다
+    if (m.lockT > 3.4 || d < 0.7) { frozen = false; die('sci', m); return true; }
+    return false;
+  }
+  // 평소: 천천히 돌아다닌다
+  if (m.pathT <= 0 || !m.path || !m.path.length) { m.pathT = 4; const p = randomSpot(); if (sciOk(p[0], p[1])) m.path = bfs(m.x, m.y, p[0], p[1], sciOk) || []; }
+  follow(m, 0.55, dt);
+  if (d < 6.5 && !hidden) {
+    const fx = -Math.sin(yaw), fy = -Math.cos(yaw), tx = (m.x - P.x) / (d || 1), ty = (m.y - P.y) / (d || 1);
+    const away = fx * tx + fy * ty < -0.35, moving = P.noise > 0.7;
+    if ((away && moving) || P.noise > 5) { // 등 돌려 도망치거나 뛰면 '실험 중 자리를 비운 것'
+      m.state = 'lock'; m.lockT = 0; frozen = true; noise(0.4, 0.6, 1800, panOf(m.x, m.y), 8); toast('🧪 시험관이 나를 가리켰다… 몸이 움직이지 않는다!<br><b>📢 선생님! 을 외쳐!</b>', 2600);
+    }
+  }
+  return false;
+}
+function shout() { // 사고가 발생하면 큰 소리로 알린다
+  if (!started || !alive || anyModal()) return;
+  audioInit(); speak('선생님!', 1.1, 1.05, 1); noiseEvents.push({ x: P.x, y: P.y, r: 15, t: 0.3 }); P.noise = 8;
+  let saved = false;
+  for (const m of mons) if (m.kind === 'sci' && Math.hypot(m.x - P.x, m.y - P.y) < 10 && m.state !== 'retreat') { m.state = 'retreat'; m.retreatT = 18; m.pathT = 0; m.path = []; saved = true; }
+  if (saved) { frozen = false; toast('불꽃이 꺼지더니… 과학실 괴물이 등을 돌려 사라졌다', 2400); }
+}
+// ===== 방송 괴담: 방송이 나오면 귀를 막아야 한다 =====
+function startBroadcast() {
+  const tgt = level ? farSpawn() : [1.5, 12.5];
+  bc = { t: 0, exp: 0, tx: tgt[0], ty: tgt[1], pulled: false };
+  if (AC) { const t = AC.currentTime; [523, 659, 784, 1047].forEach((f, i) => tone(f, t + i * 0.35, 1.2, 0.12)); }
+  setTimeout(() => { if (bc) speak('학생 여러분께 알립니다. 지금 즉시 하던 일을 멈추고, 담임 선생님을 따라 방송실로 모여 주십시오.', 0.6, 0.8, 1); }, 1500);
+  $('earB').style.display = 'flex'; document.body.classList.add('bcast');
+}
+function endBroadcast() { bc = null; $('earB').style.display = 'none'; document.body.classList.remove('bcast'); if (window.speechSynthesis) try { speechSynthesis.cancel(); } catch (e) {} }
+function updateBroadcast(dt) {
+  if (!bc) { if (phase === 'break' && period >= bcNext && phaseT < breakLen(period) - 12 && phaseT > 14) { bcNext = period + 2 + ((Math.random() * 2) | 0); startBroadcast(); } return; }
+  bc.t += dt;
+  if (bc.t > 1.5 && !earsHeld) bc.exp += dt; else bc.exp = Math.max(0, bc.exp - dt * 0.5);
+  bc.pulled = bc.exp > 1.6; // 홀려서 방송실 쪽으로 걸어간다
+  $('bcTxt').textContent = earsHeld ? '🙉 귀를 막았다… (방송 ' + Math.max(0, 12 - bc.t).toFixed(0) + '초)' : bc.pulled ? '…방송실로… 가야 해…' : '📢 지지직… 방송이 나온다! 귀를 막아!';
+  if (bc.exp > 5) { endBroadcast(); die('bc', null); return; }
+  if (bc.t > 12) { endBroadcast(); toast('방송이 끝났다…', 1500); }
+}
+
 // ===== 소리 이벤트·말하기·던지기·대화 =====
 let noiseEvents = [];
 let speakT = 0;
@@ -673,10 +767,10 @@ function speak(text, pitch, rate, vol) {
 }
 function whistle() { if (!AC) return; const t = AC.currentTime; for (const [a, b] of [[0, 0.35], [0.5, 1.2]]) { const o = AC.createOscillator(), g = AC.createGain(), l = AC.createOscillator(), lg = AC.createGain(); o.frequency.value = 2900; l.frequency.value = 38; lg.gain.value = 180; l.connect(lg); lg.connect(o.frequency); g.gain.setValueAtTime(0, t + a); g.gain.linearRampToValueAtTime(0.35, t + a + 0.03); g.gain.setValueAtTime(0.35, t + b - 0.05); g.gain.linearRampToValueAtTime(0, t + b); o.connect(g); g.connect(master); o.start(t + a); l.start(t + a); o.stop(t + b + 0.05); l.stop(t + b + 0.05); } }
 function throwItem() {
-  if (!started || !alive || anyModal() || hidden || throws <= 0) return;
-  throws--; updKey(); audioInit();
+  if (!started || !alive || anyModal() || hidden || frozen || inv.phone + inv.broom <= 0) return;
+  const kind = inv[throwSel] > 0 ? throwSel : inv.broom > 0 ? 'broom' : 'phone'; inv[kind]--; updKey(); audioInit();
   const fx = -Math.sin(yaw), fy = -Math.cos(yaw); let d = 0.5; while (d < 8) { d += 0.1; if (solid(Math.floor(P.x + fx * d), Math.floor(P.y + fy * d))) { d -= 0.3; break; } }
-  const obj = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.015, 0.14), std({ color: 0x222, roughness: 0.3, metalness: 0.4 })); obj.castShadow = true; scene.add(obj);
+  const obj = kind === 'broom' ? MD.broom() : new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.015, 0.14), std({ color: 0x222, roughness: 0.3, metalness: 0.4 })); obj.castShadow = true; scene.add(obj);
   thrown.push({ obj, sx: P.x, sy: P.y, ex: P.x + fx * d, ey: P.y + fy * d, t: 0, dur: 0.25 + d * 0.06, landed: false });
   noise(0.15, 0.2, 500, 0, 2);
 }
@@ -690,8 +784,9 @@ function updateThrown(dt) {
 let talkHideT = 0;
 function updateTalk(dt) {
   talkHideT -= dt; if (talkHideT <= 0) $('talk').classList.remove('show');
-  for (const n of npcModels) {
+  for (const n of (level === 0 ? npcModels : LV.npcs || [])) {
     const d = Math.hypot(n.px - P.x, n.py - P.y);
+    if (n.model.userData.standing && d < 6) { const want = Math.atan2(P.x - n.px, P.y - n.py); n.model.rotation.y += (((want - n.model.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * Math.min(1, dt * 4); }
     const hd = n.model.userData.head, want = d < 3.5 ? Math.max(-1, Math.min(1, Math.atan2(n.px - P.x, n.py - P.y))) : 0; hd.rotation.y += (want - hd.rotation.y) * Math.min(1, dt * 3);
     if (d < 1.4 && lastTalk !== n) { lastTalk = n; const line = n.lines[n.i++ % n.lines.length]; $('talkN').textContent = n.name; $('talkB').textContent = line; $('talk').classList.add('show'); talkHideT = 5; }
   }
@@ -854,6 +949,7 @@ function frame() {
       const tr = Math.atan2(m.fx, m.fy); md.rotation.y += (((tr - md.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * Math.min(1, dt * 6);
       if (m.kind === 'doll') placeDecal(m, md, dt);
       else if (m.kind === 'monitor') { MD.animateWalk(md, tAll, m.state === 'chase' ? 11 : 4, m.state === 'chase' ? 0.7 : 0.35); md.userData.head.rotation.z = m.state === 'chase' ? 0.3 : Math.sin(tAll * 1.3) * 0.15; if (m.state === 'chase') for (const a of md.userData.arms) a.rotation.x = -1.2 + Math.sin(tAll * 11) * 0.3; }
+      else if (m.kind === 'sci') { const u = md.userData, lock = m.state === 'lock', off = m.state === 'retreat'; const fl = off ? 0.05 : lock ? 1 + m.lockT * 0.9 : 1 + Math.sin(tAll * 9) * 0.1; u.flame.scale.set(fl, fl * (lock ? 1.6 : 1), fl); u.inner.visible = !off; u.light.intensity = off ? 0 : lock ? 3 + m.lockT * 2 : 1.6; if (lock) { u.arms[1].rotation.x = -1.4; } else { u.arms[1].rotation.x = Math.sin(tAll) * 0.1; } md.position.y = Math.abs(Math.sin(tAll * 3)) * 0.03; }
       else if (m.kind === 'pe') { md.userData.head.rotation.z = Math.sin(tAll * 0.8) * 0.2; md.userData.arms[1].rotation.x = whistled ? -2.4 : -0.1; }
       else if (m.kind === 'ball') { md.userData.ball.rotation.set(0, 0, 0); md.rotation.y = Math.atan2(m.fx, m.fy); md.userData.ball.rotation.x = m.roll || 0; md.position.y = Math.abs(Math.sin(tAll * 9 + m.x)) * 0.25; }
       else { MD.animateWalk(md, tAll, 13, 0.8); md.userData.head.lookAt(camera.position); }
@@ -905,6 +1001,50 @@ function openBook() {
   $('logoutB').style.display = token ? '' : 'none';
   modal('book', true);
 }
+// ===== 가방(인벤토리)·지도 =====
+function openBag() {
+  if (!started || !alive) return;
+  const rows = [
+    ['📱', '핸드폰', inv.phone ? '신호는 안 잡히는데 켜지기는 한다' : '(던져 버렸다)', inv.phone ? [['시계 보기', 'clock'], [throwSel === 'phone' ? '✔ 던질 물건' : '던질 물건으로', 'selphone']] : []],
+    ['🧹', '빗자루 × ' + inv.broom, '던지면 큰 소리가 나서 데칼코마니를 꾈 수 있다', inv.broom ? [[throwSel === 'broom' ? '✔ 던질 물건' : '던질 물건으로', 'selbroom']] : []],
+    ['👕', '체육복 상의', inv.peTop ? '입고 있음' : '없음 — 교무실 분실물 상자?', []],
+    ['👖', '체육복 하의', inv.peBottom ? '입고 있음' : '없음 — 교실 뒤쪽?', []],
+    ['🔑', '지하 계단 열쇠', hasKey || level ? '있음' : '없음 — 체육관 골대 아래', []],
+    ['🗺️', 'A조 탐색 지도', '지나간 곳이 저절로 그려진다', [['지도 보기', 'map']]],
+    ['📓', '쪽지 ' + save.notes.length + '장 · 규칙 ' + save.rules.length + '개', '', [['수첩 보기', 'book']]],
+  ];
+  $('bagB').innerHTML = rows.map(([ic, nm, ds, acts]) => '<div class="item"><span class="ic">' + ic + '</span><div><b>' + nm + '</b><small>' + ds + '</small></div><div class="acts">' + acts.map(([l, a]) => '<button data-a="' + a + '">' + l + '</button>').join('') + '</div></div>').join('');
+  modal('bag', true);
+}
+$('bagB').addEventListener('click', (e) => {
+  const a = e.target.dataset && e.target.dataset.a; if (!a) return;
+  if (a === 'selphone' || a === 'selbroom') { throwSel = a.slice(3); updKey(); openBag(); }
+  else if (a === 'map') { modal('bag', false); openMap(); }
+  else if (a === 'book') { modal('bag', false); openBook(); }
+  else if (a === 'clock') { const inside = runTime, outside = inside / 365; modal('bag', false); $('noteT').textContent = '📱 핸드폰'; $('noteB').textContent = '신호 없음 · 배터리 ' + Math.max(1, 100 - Math.floor(inside / 60)) + '%\n\n검은 원 안에서 흐른 시간: ' + fmt(inside) + '\n바깥에서 흐른 시간: ' + outside.toFixed(1) + '초\n\n(안에서의 1년이 밖에서는 하루)'; modal('note', true); }
+});
+function openMap() {
+  if (!started) return;
+  const c = $('mapC'), g = c.getContext('2d'), sc = Math.floor(Math.min(innerWidth - 60, 640) / W);
+  c.width = W * sc; c.height = H * sc; g.fillStyle = '#0b0b0d'; g.fillRect(0, 0, c.width, c.height);
+  const sn = LV.seen || new Uint8Array(W * H);
+  const col = ['#5d6a5e', '#8a6a45', '#7c9aa6', '#7a5a4a', '#8a8060', '#556', '#a07a3a', '#5a8a8a', '#6a5a7a'];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (!sn[ix(x, y)]) continue; const t = tt(x, y);
+    g.fillStyle = t === WALL || t === MIRROR ? '#26262a' : t === STAIR ? '#2fd070' : t === LOCKER ? '#9aa' : t === DESK ? '#4a3a2a' : level ? (rr(x, y) === 1 ? '#8a6a45' : rr(x, y) === 3 ? '#7a5a4a' : '#8c8a5a') : col[rr(x, y)];
+    g.fillRect(x * sc, y * sc, sc, sc);
+  }
+  g.font = 'bold ' + Math.max(9, sc) + 'px sans-serif'; g.textAlign = 'center'; g.fillStyle = '#fff';
+  if (!level) { const lab = [[7, 5, 1], [18.5, 5, 2], [30, 5, 3], [42, 5, 4], [52.5, 6, 5], [8.5, 21, 6], [26, 21, 7], [46, 21, 8]]; for (const [x, y, r] of lab) if (sn[ix(x | 0, y | 0)]) g.fillText(ROOMS[r], x * sc, y * sc); }
+  else if (LV.door && sn[ix(LV.door[0], LV.door[1])]) { g.fillStyle = '#d03030'; g.fillRect(LV.door[0] * sc, LV.door[1] * sc - 2, sc, 4); }
+  if (level === 1 && LV.rooms && sn[ix(LV.rooms[1].x + 1, LV.rooms[1].y + 1)]) { g.fillStyle = '#fff'; g.fillText('2-1', (LV.rooms[1].x + LV.rooms[1].w / 2) * sc, (LV.rooms[1].y + LV.rooms[1].h / 2) * sc); }
+  g.save(); g.translate(P.x * sc, P.y * sc); g.rotate(-yaw); g.fillStyle = '#ffd23a'; g.beginPath(); g.moveTo(0, -sc * 1.1); g.lineTo(sc * 0.7, sc * 0.7); g.lineTo(-sc * 0.7, sc * 0.7); g.closePath(); g.fill(); g.restore();
+  $('mapT').textContent = '🗺️ ' + floorName(level) + ' 지도 (A조)';
+  modal('mapM', true);
+}
+$('bagBtn').onclick = openBag; $('mapBtn').onclick = openMap;
+$('bagOk').onclick = () => modal('bag', false); $('mapOk').onclick = () => modal('mapM', false);
+
 $('bookBtn').onclick = openBook;
 $('bookOk').onclick = () => modal('book', false);
 $('noteOk').onclick = () => modal('note', false);
@@ -927,4 +1067,4 @@ $('loginB').onclick = async () => {
 if (token) { $('lmsg').textContent = '저장된 로그인으로 접속 중…'; loadServer().then(goIntro).catch((e) => { if (e.status === 401) { token = ''; localStorage.removeItem('hor_tok'); } $('lmsg').textContent = e.status === 401 ? '다시 로그인해 주세요' : '서버에 연결하지 못했어요. 게스트로 먼저 해 보세요'; }); }
 document.title = GAME_TITLE;
 // 테스트·디버그용
-window.__g = { descend, get level() { return level; }, get LV() { return LV; }, get fold() { return fold; }, get noiseEvents() { return noiseEvents; }, throwItem, get npcs() { return npcModels; }, givePE() { hasPE = true; updKey(); }, get calls() { return renderer.info.render.calls; }, get P() { return P; }, get mons() { return mons; }, get mir() { return mir; }, set yaw(v) { yaw = v; }, set pitch(v) { pitch = v; }, get alive() { return alive; }, get save() { return save; }, setPhaseT(v) { phaseT = v; }, get phase() { return phase; }, get stairsOpen() { return stairsOpen; }, giveKey() { hasKey = true; updKey(); }, get keyPos() { return keyPos; } };
+window.__g = { get bc() { return bc; }, get anyM() { return anyModal() && anyModal().id; }, startBc: startBroadcast, descend, get level() { return level; }, get LV() { return LV; }, get fold() { return fold; }, get noiseEvents() { return noiseEvents; }, throwItem, get npcs() { return npcModels; }, givePE() { hasPE = true; updKey(); }, get calls() { return renderer.info.render.calls; }, get P() { return P; }, get mons() { return mons; }, get mir() { return mir; }, set yaw(v) { yaw = v; }, set pitch(v) { pitch = v; }, get alive() { return alive; }, get save() { return save; }, setPhaseT(v) { phaseT = v; }, get phase() { return phase; }, get stairsOpen() { return stairsOpen; }, giveKey() { hasKey = true; updKey(); }, get keyPos() { return keyPos; } };

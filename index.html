@@ -8,7 +8,7 @@
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 html,body{margin:0;height:100%;background:#000;color:#ddd;font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;overflow:hidden;touch-action:none}
-canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block}
 #hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 8px) 10px 8px;display:flex;align-items:center;gap:8px;pointer-events:none;z-index:5}
 #bell{flex:1;text-align:center;font-weight:700;font-size:15px;text-shadow:0 0 6px #000}
 #floorChip{display:block;font-size:20px;letter-spacing:2px;color:#f0e6b0;text-shadow:0 0 8px #000,0 0 2px #000;margin-bottom:1px}
@@ -24,12 +24,25 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 #bar i{display:block;height:100%;background:#9ad;width:100%}
 .chip{background:rgba(0,0,0,.55);border:1px solid #333;border-radius:14px;padding:5px 10px;font-size:13px;white-space:nowrap}
 .chip.got{border-color:#c9a227;color:#f3d77a}
-#bookBtn{pointer-events:auto;cursor:pointer}
+#bookBtn,#bagBtn,#mapBtn{pointer-events:auto;cursor:pointer}
+#shoutB{visibility:hidden;background:rgba(255,120,60,.25);border-color:#f96}
+#earB{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 110px);transform:translateX(-50%);width:120px;height:120px;display:none;z-index:6;background:rgba(255,60,60,.25);border-color:#f66;font-size:15px}
+#earB.on{background:rgba(120,255,160,.35);border-color:#9f9}
+#bcTxt{position:fixed;left:0;right:0;top:30%;text-align:center;font-weight:800;font-size:18px;color:#ffd0c0;text-shadow:0 0 8px #000;display:none;z-index:6;pointer-events:none}
+body.bcast #bcTxt{display:block}
+body.bcast #cv{animation:bcw 1.2s infinite;filter:saturate(.4) contrast(1.2)}
+@keyframes bcw{0%,100%{transform:translate(0,0)}25%{transform:translate(2px,-1px) skewX(.6deg)}50%{transform:translate(-2px,1px)}75%{transform:translate(1px,2px) skewX(-.6deg)}}
+.item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #222}
+.item .ic{font-size:26px;width:34px;text-align:center}
+.item div:nth-child(2){flex:1}.item small{display:block;opacity:.6;font-size:12px}
+.item .acts{display:flex;flex-direction:column;gap:4px}
+.item .acts button{width:auto;padding:6px 10px;margin:0;font-size:12px;background:#2a3a5a}
+#mapC{width:100%;image-rendering:pixelated;border:1px solid #333;border-radius:6px;background:#000}
 #toast{position:fixed;left:50%;top:22%;transform:translateX(-50%);background:rgba(0,0,0,.75);border:1px solid #555;padding:10px 16px;border-radius:10px;font-size:15px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:6;text-align:center;max-width:86vw}
 #classTxt{position:fixed;left:0;right:0;bottom:130px;text-align:center;font-weight:700;opacity:0;transition:opacity .4s;pointer-events:none;z-index:5;text-shadow:0 0 6px #000}
 #cross{position:fixed;left:50%;top:50%;width:4px;height:4px;margin:-2px;border-radius:50%;background:rgba(255,255,255,.35);pointer-events:none;z-index:4}
-#btns{position:fixed;right:calc(env(safe-area-inset-right) + 14px);bottom:calc(env(safe-area-inset-bottom) + 18px);display:grid;grid-template-columns:repeat(2,70px);gap:12px;z-index:5}
-.b{width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);color:#eee;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;touch-action:none}
+#btns{position:fixed;right:calc(env(safe-area-inset-right) + 14px);bottom:calc(env(safe-area-inset-bottom) + 18px);display:grid;grid-template-columns:repeat(2,64px);gap:12px;z-index:5}
+.b{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);color:#eee;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;touch-action:none}
 .b span{font-size:21px;line-height:1.1}
 .b.on{background:rgba(120,180,255,.3);border-color:#9cf}
 #talk{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 190px);background:rgba(10,10,12,.85);border:1px solid #444;border-radius:12px;padding:10px 14px;z-index:6;display:none;pointer-events:none;max-width:460px;margin:0 auto}
@@ -69,17 +82,20 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 <div id="hud">
   <div class="chip" id="keyChip">🔑 없음 · 👔 교복</div>
   <div id="bell"><b id="floorChip">1층</b><span id="bellTxt">1교시 · 쉬는 시간</span><small>1:00</small><div id="bar"><i></i></div></div>
-  <div class="chip" id="bookBtn">📓 수첩</div>
+  <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end"><div class="chip" id="bookBtn">📓 수첩</div><div class="chip" id="bagBtn">🎒 가방</div><div class="chip" id="mapBtn">🗺️ 지도</div></div>
 </div>
 <div id="toast"></div>
 <div id="fade"></div><div id="floorBig"></div><div id="tak">탁</div>
 <div id="talk"><b id="talkN"></b><span id="talkB"></span></div>
 <div id="drawShow"></div>
 <div id="classTxt">✏️ 수업 중… 교실 밖으로 나가지 마세요</div>
+<div class="b" id="earB"><span>🙉</span>귀 막기<br>(누르고 있기)</div>
+<div id="bcTxt"></div>
 <div id="btns">
   <div class="b" id="hideB"><span>🚪</span>숨기</div>
   <div class="b" id="sneakB"><span>🤫</span>살금</div>
   <div class="b" id="throwB"><span>📱</span>던지기 1</div>
+  <div class="b" id="shoutB"><span>📢</span>선생님!</div>
   <div class="b" id="runB"><span>🏃</span>달리기</div>
 </div>
 
@@ -101,7 +117,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   <p>정신을 차려 보니 1학년 4반 교실. 복도로 나간 담임 선생님은… 돌아오지 못했다.</p>
   <div class="paper">칠판에 분필로 적힌 글씨:
 "종이 울리면 반드시 자리에 앉을 것."</div>
-  <p class="muted">나: 김도윤 (1학년 4반)<br>목표: 교무실 체육복 → 체육관 열쇠 → 지하 계단. 그 아래로는 끝없이 이어지는 층… 계단이나 빨간 문을 찾아 계속 내려가자<br>폰: 왼쪽 드래그 이동 · 오른쪽 드래그 둘러보기 · 📱던지기로 소리 유인<br>PC: 클릭 후 마우스 · WASD · Shift 달리기 · C 살금 · E 숨기 · F 던지기<br>🎧 이어폰 권장</p>
+  <p class="muted">나: 김도윤 (1학년 4반)<br>목표: 교무실 체육복 → 체육관 열쇠 → 지하 계단. 그 아래로는 끝없이 이어지는 층… 계단이나 빨간 문을 찾아 계속 내려가자<br>폰: 왼쪽 드래그 이동 · 오른쪽 드래그 둘러보기 · 던지기로 소리 유인 · 🎒가방 · 🗺️지도<br>PC: 클릭 후 마우스 · WASD · Shift 달리기 · C 살금 · E 숨기 · F 던지기 · G 선생님! · H 귀 막기 · I 가방 · M 지도<br>🎧 이어폰 권장</p>
   <button id="startB">시작하기</button>
 </div></div>
 
@@ -109,6 +125,19 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   <h2 id="noteT">쪽지</h2>
   <div class="paper" id="noteB"></div>
   <button id="noteOk">닫기</button>
+</div></div>
+
+<div class="modal" id="bag"><div class="card">
+  <h2>🎒 가방</h2>
+  <div id="bagB"></div>
+  <button id="bagOk">닫기</button>
+</div></div>
+
+<div class="modal" id="mapM"><div class="card">
+  <h2 id="mapT">🗺️ 지도</h2>
+  <canvas id="mapC"></canvas>
+  <p class="muted">지나간 곳만 그려져요. 노란 화살표가 나, 초록색이 내려가는 계단.</p>
+  <button id="mapOk">닫기</button>
 </div></div>
 
 <div class="modal" id="book"><div class="card">
@@ -134,6 +163,6 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   <p class="muted">프로토타입은 여기까지예요. 다음 층은 업데이트 예정!</p>
   <button id="againB">처음부터 다시</button>
 </div></div>
-<script type="module" src="game.js?v=5"></script>
+<script type="module" src="game.js?v=6"></script>
 </body>
 </html>
