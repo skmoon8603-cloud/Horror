@@ -724,7 +724,7 @@ function update(dt) {
 // ===== 멀티플레이 (같은 방 친구들과 함께). 방장이 괴물·종소리를 계산해서 나눠 준다 =====
 const SYNC = { doll: 1, monitor: 2, sci: 3 }, SYNC_K = ['', 'doll', 'monitor', 'sci'];
 const ST_C = ['wander', 'hunt', 'patrol', 'chase', 'lock', 'retreat', 'idle'];
-const mp = { on: false, host: true, code: '', me: '', roster: [], others: new Map(), sendT: 0, monT: 0 };
+const mp = { on: false, host: true, code: '', me: '', slot: 0, roster: [], others: new Map(), sendT: 0, monT: 0, lastS: '', lastSt: 0, lastM: '', lastMt: 0 };
 let net = null;
 const isHost = () => !mp.on || mp.host;
 const sameFloor = (o) => o.lv === level && o.a && !o.h;
@@ -754,25 +754,28 @@ function mpConnect(code) {
   net.on('rooms', (list) => { $('mpRooms').innerHTML = list.length ? list.map((r) => '<button class="g" data-c="' + r.code + '">방 ' + r.code + ' · ' + r.n + '명 — 참가</button>').join('') : '<p class="muted">지금 열린 방이 없어요. 새로 만들어 보세요!</p>'; });
   net.on('joinErr', (e) => { $('mpMsg').textContent = e === 'full' ? '방이 꽉 찼어요 (최대 6명)' : '방 번호는 숫자 4자리예요'; });
   net.on('joined', (d) => {
-    mp.on = true; mp.code = d.code; mp.me = d.me; mp.host = !!d.host; mp.nick = d.nick;
+    mp.on = true; mp.code = d.code; mp.me = d.me; mp.slot = d.s; mp.host = !!d.host; mp.nick = d.nick;
     modal('mp', false); modal('intro', false); audioInit();
     if (!started) { if (!mp.host) { applyLevel(LV0); } reset(); started = true; bellSound(1.06); }
     toast('👥 방 ' + d.code + '에 들어왔어요' + (mp.host ? ' (방장)' : '') + '<br>친구에게 방 번호를 알려 주세요', 3500); updRoster();
   });
-  net.on('roster', (list) => { mp.roster = list; const me = list.find((p) => p.id === mp.me); if (me) mp.host = !!me.host; for (const id of [...mp.others.keys()]) if (!list.some((p) => p.id === id)) removeOther(id); for (const p of list) if (p.id !== mp.me) otherOf(p.id, p.nick); updRoster(); });
+  net.on('roster', (list) => { mp.roster = list; const me = list.find((p) => p.id === mp.me); if (me) mp.host = !!me.host; for (const sl of [...mp.others.keys()]) if (!list.some((p) => p.s === sl)) removeOther(sl); for (const p of list) if (p.id !== mp.me) otherOf(p.s, p.nick); updRoster(); });
   net.on('host', () => { mp.host = true; toast('👑 방장이 되었다 — 이제 괴물은 내 화면에서 계산된다', 2500); updRoster(); });
   net.on('gone', (id) => removeOther(id));
-  net.on('pst', (d) => { const o = otherOf(d.id, (mp.roster.find((p) => p.id === d.id) || {}).nick); const was = o.a; Object.assign(o, { rx: d.x, ry: d.y, yaw: d.yaw, e: d.e, lv: d.lv, a: d.a, h: d.h, n: d.n || 0, c: d.c }); if (!o.x && !o.y) { o.x = d.x; o.y = d.y; } if (was && !d.a) {} });
-  net.on('mon', (d) => applyMonSnap(d));
+  net.on('p', (d) => { // [자리, 층, x*10, y*10, 방향*100, 상태비트, 소리*10]
+    const [sl, lv, x, y, yw, f, n] = d; if (sl === mp.slot) return; const o = otherOf(sl, (mp.roster.find((p) => p.s === sl) || {}).nick);
+    Object.assign(o, { rx: x / 10, ry: y / 10, yaw: yw / 100, lv, a: f & 1, h: (f >> 1) & 1, e: f & 4 ? 1.1 : 1.6, c: (f >> 3) & 1, n: n / 10 }); if (!o.x && !o.y) { o.x = o.rx; o.y = o.ry; }
+  });
+  net.on('m', (d) => applyMonSnap(d));
   net.on('ev', (d) => onNetEvent(d));
-  net.on('chat', (d) => { toast('💬 <b>' + esc(d.nick) + '</b>: ' + esc(d.t), 3500); const o = mp.others.get(d.id); if (o) { if (o.bub) o.model.remove(o.bub); o.bub = nameSprite('💬 ' + d.t.slice(0, 14)); o.bub.position.y = 2.35; o.model.add(o.bub); o.bubT = 4; } });
+  net.on('chat', (d) => { toast('💬 <b>' + esc(d.nick) + '</b>: ' + esc(d.t), 3500); const o = mp.others.get(d.s); if (o) { if (o.bub) o.model.remove(o.bub); o.bub = nameSprite('💬 ' + d.t.slice(0, 14)); o.bub.position.y = 2.35; o.model.add(o.bub); o.bubT = 4; } });
   net.on('disconnect', () => { if (mp.on) toast('서버 연결이 끊겼어요… 다시 연결하는 중', 2500); });
 }
 const esc = (t) => String(t).replace(/[<>&"]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' })[c]);
 function updRoster() { $('mpChip').style.display = mp.on ? '' : 'none'; $('mpChip').textContent = '👥 방 ' + mp.code + ' · ' + mp.roster.length + '명' + (mp.host ? ' 👑' : ''); $('restartB').style.display = mp.on && !mp.host ? 'none' : ''; }
 function mpEmit(d) { if (mp.on && net) net.emit('ev', d); }
 function onNetEvent(d) {
-  const o = mp.others.get(d.from), nick = o ? o.nick : '누군가';
+  const o = mp.others.get(d.f), nick = o ? o.nick : '누군가';
   if (d.t === 'noise' && isHost()) noiseEvents.push({ x: d.x, y: d.y, r: d.r, t: 0.3 });
   else if (d.t === 'shout') { if (isHost()) { noiseEvents.push({ x: d.x, y: d.y, r: 15, t: 0.3 }); for (const m of mons) if (m.kind === 'sci' && Math.hypot(m.x - d.x, m.y - d.y) < 10) { m.state = 'retreat'; m.retreatT = 18; m.pathT = 0; m.path = []; } } if (d.lv === level) toast('📢 ' + esc(nick) + ': 「선생님!」', 1500); }
   else if (d.t === 'fold' && !isHost() && d.lv === level) { const m = mons.find((x) => x.remote && x.nid === d.mid); if (m) applyFold(m, d.p); }
@@ -783,12 +786,23 @@ function onNetEvent(d) {
 }
 function mpTick(dt) {
   if (!mp.on || !net) return;
+  const now = performance.now();
   mp.sendT -= dt;
-  if (mp.sendT <= 0) { mp.sendT = 0.12; net.emit('st', { lv: level, x: +P.x.toFixed(2), y: +P.y.toFixed(2), yaw: +yaw.toFixed(2), e: +eye.toFixed(2), a: alive ? 1 : 0, h: hidden ? 1 : 0, n: +(P.noise || 0).toFixed(1), c: inClass() ? 1 : 0 }); }
-  if (mp.host) { mp.monT -= dt; if (mp.monT <= 0) { mp.monT = 0.15; net.emit('mon', { lv: level, ph: phase === 'class' ? 1 : 0, pt: +phaseT.toFixed(1), pd: period, m: mons.filter((m) => SYNC[m.kind]).map((m) => [m.nid, SYNC[m.kind], +m.x.toFixed(2), +m.y.toFixed(2), +m.fx.toFixed(2), +m.fy.toFixed(2), ST_C.indexOf(m.kind === 'sci' && m.state === 'lock' ? 'wander' : m.state)]) }); } }
+  if (mp.sendT <= 0) { // 내 상태: 바뀌었을 때만 (멈춰 있으면 3초에 한 번만) 보낸다
+    mp.sendT = 0.2;
+    const f = (alive ? 1 : 0) | (hidden ? 2 : 0) | (eye < 1.3 ? 4 : 0) | (inClass() ? 8 : 0);
+    const a = [level, Math.round(P.x * 10), Math.round(P.y * 10), Math.round(yaw * 100) % 629, f, Math.round((P.noise || 0) * 10)], k = a.join();
+    if (k !== mp.lastS || now - mp.lastSt > 3000) { mp.lastS = k; mp.lastSt = now; net.volatile.emit('s', a); }
+  }
+  if (mp.host) { mp.monT -= dt; if (mp.monT <= 0) { mp.monT = 0.25; // 괴물·종: [층, 수업?, 남은 초, 교시, (번호, 종류, x*10, y*10, 방향0~63, 상태)...]
+    const a = [level, phase === 'class' ? 1 : 0, Math.ceil(phaseT), period];
+    for (const m of mons) if (SYNC[m.kind]) a.push(m.nid, SYNC[m.kind], Math.round(m.x * 10), Math.round(m.y * 10), (Math.round(Math.atan2(m.fx, m.fy) / (Math.PI * 2) * 64) + 64) % 64, ST_C.indexOf(m.kind === 'sci' && m.state === 'lock' ? 'wander' : m.state));
+    const k = a.join(); if (k !== mp.lastM || now - mp.lastMt > 2000) { mp.lastM = k; mp.lastMt = now; net.volatile.emit('m', a); } } }
 }
-function applyMonSnap(d) {
+function applyMonSnap(arr) {
   if (isHost() || !started) return;
+  const d = { lv: arr[0], ph: arr[1], pt: arr[2], pd: arr[3], m: [] };
+  for (let i = 4; i + 5 < arr.length; i += 6) { const a = arr[i + 4] / 64 * Math.PI * 2; d.m.push([arr[i], arr[i + 1], arr[i + 2] / 10, arr[i + 3] / 10, Math.sin(a), Math.cos(a), arr[i + 5]]); }
   if (d.lv !== level && !transitioning) { // 방장이 있는 층으로 따라간다
     transitioning = true; $('fade').classList.add('show');
     setTimeout(() => { applyLevel(d.lv ? genLevel(d.lv) : LV0); save.deep = Math.max(save.deep || 0, level); persist(); reset(); $('floorBig').textContent = floorName(level); $('floorBig').classList.add('show'); setTimeout(() => { $('fade').classList.remove('show'); transitioning = false; }, 400); setTimeout(() => $('floorBig').classList.remove('show'), 2600); }, 700);
@@ -797,7 +811,7 @@ function applyMonSnap(d) {
   const nph = d.ph ? 'class' : 'break';
   if (nph !== phase) { if (nph === 'class') bellSound(); else { bellSound(1.06); monitorSteps(null); } }
   if (phase === 'break' && phaseT > 10 && d.pt <= 10 && nph === 'break') { dingSound(); toast('⚠️ 곧 수업 종이 울려요! 교실로 돌아가세요'); }
-  phase = nph; phaseT = d.pt; period = d.pd;
+  phase = nph; if (Math.abs(phaseT - d.pt) > 1.2) phaseT = d.pt; period = d.pd;
   const seen = new Set();
   for (const [nid, k, x, y, fx, fy, sc] of d.m) {
     seen.add(nid); let m = mons.find((q) => q.remote && q.nid === nid);
