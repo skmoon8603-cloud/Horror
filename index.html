@@ -24,7 +24,7 @@ html,body{margin:0;height:100%;background:#000;color:#ddd;font-family:system-ui,
 #bar i{display:block;height:100%;background:#9ad;width:100%}
 .chip{background:rgba(0,0,0,.55);border:1px solid #333;border-radius:14px;padding:5px 10px;font-size:13px;white-space:nowrap}
 .chip.got{border-color:#c9a227;color:#f3d77a}
-#bookBtn,#bagBtn,#mapBtn{pointer-events:auto;cursor:pointer}
+#bookBtn,#bagBtn,#mapBtn,#chatBtn{pointer-events:auto;cursor:pointer}
 #shoutB{visibility:hidden;background:rgba(255,120,60,.25);border-color:#f96}
 #earB{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 110px);transform:translateX(-50%);width:120px;height:120px;display:none;z-index:6;background:rgba(255,60,60,.25);border-color:#f66;font-size:15px}
 #earB.on{background:rgba(120,255,160,.35);border-color:#9f9}
@@ -80,9 +80,9 @@ body.bcast #cv{animation:bcw 1.2s infinite;filter:saturate(.4) contrast(1.2)}
 <div id="cross"></div>
 <div id="vent"></div><div id="ventBg"></div><div id="ventTxt"></div>
 <div id="hud">
-  <div class="chip" id="keyChip">🔑 없음 · 👔 교복</div>
+  <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-start"><div class="chip" id="keyChip">🔑 없음 · 👔 교복</div><div class="chip" id="mpChip" style="display:none;pointer-events:auto;cursor:pointer">👥</div></div>
   <div id="bell"><b id="floorChip">1층</b><span id="bellTxt">1교시 · 쉬는 시간</span><small>1:00</small><div id="bar"><i></i></div></div>
-  <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end"><div class="chip" id="bookBtn">📓 수첩</div><div class="chip" id="bagBtn">🎒 가방</div><div class="chip" id="mapBtn">🗺️ 지도</div></div>
+  <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end"><div class="chip" id="bookBtn">📓 수첩</div><div class="chip" id="bagBtn">🎒 가방</div><div class="chip" id="mapBtn">🗺️ 지도</div><div class="chip" id="chatBtn">💬 채팅</div></div>
 </div>
 <div id="toast"></div>
 <div id="fade"></div><div id="floorBig"></div><div id="tak">탁</div>
@@ -118,7 +118,20 @@ body.bcast #cv{animation:bcw 1.2s infinite;filter:saturate(.4) contrast(1.2)}
   <div class="paper">칠판에 분필로 적힌 글씨:
 "종이 울리면 반드시 자리에 앉을 것."</div>
   <p class="muted">나: 김도윤 (1학년 4반)<br>목표: 교무실 체육복 → 체육관 열쇠 → 지하 계단. 그 아래로는 끝없이 이어지는 층… 계단이나 빨간 문을 찾아 계속 내려가자<br>폰: 왼쪽 드래그 이동 · 오른쪽 드래그 둘러보기 · 던지기로 소리 유인 · 🎒가방 · 🗺️지도<br>PC: 클릭 후 마우스 · WASD · Shift 달리기 · C 살금 · E 숨기 · F 던지기 · G 선생님! · H 귀 막기 · I 가방 · M 지도<br>🎧 이어폰 권장</p>
-  <button id="startB">시작하기</button>
+  <button id="startB">혼자 하기</button>
+  <button class="g" id="mpB" style="background:#1f3a5a">👥 친구랑 같이 하기</button>
+</div></div>
+
+<div class="modal" id="mp"><div class="card">
+  <h2>👥 같이 하기</h2>
+  <p class="muted">방 번호(숫자 4자리)가 같으면 같이 플레이해요. 최대 6명. 방장 화면에서 괴물이 계산돼요.</p>
+  <button id="mpNew">새 방 만들기</button>
+  <input id="mpCode" inputmode="numeric" maxlength="4" placeholder="방 번호 4자리">
+  <button class="g" id="mpJoin">이 번호로 들어가기</button>
+  <p><b>열린 방</b> <button class="g" id="mpRefresh" style="width:auto;padding:4px 10px;font-size:12px">새로고침</button></p>
+  <div id="mpRooms"><p class="muted">불러오는 중…</p></div>
+  <p class="muted" id="mpMsg"></p>
+  <button class="g" id="mpBack">뒤로</button>
 </div></div>
 
 <div class="modal" id="note"><div class="card">
@@ -163,6 +176,6 @@ body.bcast #cv{animation:bcw 1.2s infinite;filter:saturate(.4) contrast(1.2)}
   <p class="muted">프로토타입은 여기까지예요. 다음 층은 업데이트 예정!</p>
   <button id="againB">처음부터 다시</button>
 </div></div>
-<script type="module" src="game.js?v=6"></script>
+<script type="module" src="game.js?v=7"></script>
 </body>
 </html>
