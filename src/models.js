@@ -95,21 +95,38 @@ export function makeTextbookGirl() {
   return g;
 }
 
-// ===== 데칼코마니: 벽 속에 숨어 있다가 거대한 손만 내미는 괴물 =====
-export function makeDecal() {
+// ===== 데칼코마니: 본체는 거대한 손. 복도를 따라 긴 팔을 끌고 기어 다닌다 =====
+export function makeGiantHand() {
   const g = new THREE.Group();
-  const patch = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), new THREE.MeshStandardMaterial({ map: TX.tornPaperTex(), transparent: true, roughness: 0.9, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
-  g.add(patch);
-  const skin = once('sketch', () => std({ map: TX.sketchSkinTex(), roughness: 0.9 }));
-  const arm = new THREE.Group(); g.add(arm);
-  const fore = capsule(0.17, 2.2, skin, 0, 0, -1.2); fore.rotation.x = Math.PI / 2; arm.add(fore);
-  const hand = new THREE.Group(); hand.position.set(0, 0, 0.1); arm.add(hand);
-  hand.add(mesh(new RoundedBoxGeometry(0.75, 0.14, 0.7, 3, 0.06), skin, 0, 0, 0.3));
-  for (let f = 0; f < 4; f++) { const fg = capsule(0.05, 0.55, skin, -0.27 + f * 0.18, 0, 0.95); fg.rotation.x = Math.PI / 2; hand.add(fg); }
-  const th = capsule(0.055, 0.35, skin, 0.42, 0, 0.35); th.rotation.set(Math.PI / 2, 0, -0.9); hand.add(th);
-  arm.visible = false; arm.scale.setScalar(1.7);
-  g.userData = { patch, arm, hand, faceY: 0 };
+  const skin = once('handSkin', () => std({ map: TX.sketchSkinTex(), color: 0xd2dab4, roughness: 0.85 }));
+  const palm = mesh(new RoundedBoxGeometry(0.85, 0.2, 0.8, 4, 0.08), skin, 0, 0, 0); g.add(palm);
+  const fingers = [];
+  const fx = [-0.31, -0.105, 0.105, 0.31], fl = [0.5, 0.62, 0.6, 0.45];
+  for (let i = 0; i < 4; i++) {
+    let parent = new THREE.Group(); parent.position.set(fx[i], 0, 0.38); g.add(parent); const base = parent;
+    const segs = [];
+    for (let k = 0; k < 3; k++) {
+      const len = fl[i] * [0.45, 0.32, 0.25][k], r = 0.075 - k * 0.012;
+      const seg = capsule(r, len, skin, 0, 0, len / 2); seg.rotation.x = Math.PI / 2; parent.add(seg);
+      const nx = new THREE.Group(); nx.position.set(0, 0, len + r * 0.6); parent.add(nx); segs.push(parent); parent = nx;
+    }
+    const nail = mesh(new THREE.BoxGeometry(0.09, 0.02, 0.08), once('handNail', () => std({ color: 0x9a9a80, roughness: 0.4 })), 0, 0.05, -0.02); parent.add(nail);
+    fingers.push({ base, segs });
+  }
+  const th = new THREE.Group(); th.position.set(0.45, 0, 0.02); th.rotation.y = 0.9; g.add(th);
+  const t1 = capsule(0.085, 0.26, skin, 0, 0, 0.13); t1.rotation.x = Math.PI / 2; th.add(t1);
+  const th2 = new THREE.Group(); th2.position.set(0, 0, 0.3); th.add(th2); const t2 = capsule(0.07, 0.2, skin, 0, 0, 0.1); t2.rotation.x = Math.PI / 2; th2.add(t2);
+  const wrist = capsule(0.24, 0.5, skin, 0, 0.02, -0.55); wrist.rotation.x = Math.PI / 2; g.add(wrist);
+  g.scale.setScalar(1.9); // 거대한 손
+  g.userData = { fingers, thumb: [th, th2], skin, faceY: 0.15 };
   return g;
+}
+export function curlHand(h, t, walk, grip) { // walk: 손가락으로 걷기, grip: 움켜쥐기(0~1)
+  h.userData.fingers.forEach((f, i) => {
+    const w = walk ? Math.sin(t * 9 + i * 1.6) * 0.5 : 0;
+    f.segs[0].rotation.x = -0.15 + w * 0.6 + grip * 0.9; f.segs[1].rotation.x = 0.2 + Math.max(0, w) * 0.5 + grip * 1.2; f.segs[2].rotation.x = 0.15 + grip * 1.0;
+  });
+  h.userData.thumb[0].rotation.x = grip * 0.8; h.userData.thumb[1].rotation.x = grip * 0.9;
 }
 
 // ===== 체육 괴물: 아주 큰 키, 긴 팔다리, 그림자 진 얼굴에 큰 눈과 찢어진 입, 빨간 호루라기 =====

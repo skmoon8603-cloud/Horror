@@ -11,6 +11,14 @@ html,body{margin:0;height:100%;background:#000;color:#ddd;font-family:system-ui,
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 #hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 8px) 10px 8px;display:flex;align-items:center;gap:8px;pointer-events:none;z-index:5}
 #bell{flex:1;text-align:center;font-weight:700;font-size:15px;text-shadow:0 0 6px #000}
+#floorChip{display:block;font-size:20px;letter-spacing:2px;color:#f0e6b0;text-shadow:0 0 8px #000,0 0 2px #000;margin-bottom:1px}
+#fade{position:fixed;inset:0;background:#000;opacity:0;transition:opacity .6s;pointer-events:none;z-index:8}
+#fade.show{opacity:1}
+#floorBig{position:fixed;left:0;right:0;top:38%;text-align:center;font-size:44px;font-weight:900;letter-spacing:6px;color:#e8e0b8;text-shadow:0 0 20px #000;opacity:0;transition:opacity .8s;pointer-events:none;z-index:9}
+#floorBig.show{opacity:1}
+#tak{position:fixed;right:12%;top:18%;font-size:120px;font-weight:900;color:#a0101a;font-family:'Black Han Sans','Nanum Brush Script',serif;text-shadow:4px 4px 0 #1a0000;transform:rotate(8deg) scale(.6);opacity:0;pointer-events:none;z-index:7}
+#tak.show{animation:tak .7s ease-out}
+@keyframes tak{0%{opacity:1;transform:rotate(8deg) scale(1.4)}20%{opacity:1;transform:rotate(8deg) scale(1)}100%{opacity:0;transform:rotate(8deg) scale(1)}}
 #bell small{display:block;font-weight:400;font-size:12px;opacity:.8}
 #bar{height:4px;background:#333;border-radius:2px;margin-top:4px;overflow:hidden}
 #bar i{display:block;height:100%;background:#9ad;width:100%}
@@ -60,10 +68,11 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 <div id="vent"></div><div id="ventBg"></div><div id="ventTxt"></div>
 <div id="hud">
   <div class="chip" id="keyChip">🔑 없음 · 👔 교복</div>
-  <div id="bell">1교시 · 쉬는 시간<small>1:00</small><div id="bar"><i></i></div></div>
+  <div id="bell"><b id="floorChip">1층</b><span id="bellTxt">1교시 · 쉬는 시간</span><small>1:00</small><div id="bar"><i></i></div></div>
   <div class="chip" id="bookBtn">📓 수첩</div>
 </div>
 <div id="toast"></div>
+<div id="fade"></div><div id="floorBig"></div><div id="tak">탁</div>
 <div id="talk"><b id="talkN"></b><span id="talkB"></span></div>
 <div id="drawShow"></div>
 <div id="classTxt">✏️ 수업 중… 교실 밖으로 나가지 마세요</div>
@@ -92,7 +101,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   <p>정신을 차려 보니 1학년 4반 교실. 복도로 나간 담임 선생님은… 돌아오지 못했다.</p>
   <div class="paper">칠판에 분필로 적힌 글씨:
 "종이 울리면 반드시 자리에 앉을 것."</div>
-  <p class="muted">나: 김도윤 (1학년 4반)<br>목표: 교무실에서 체육복 → 체육관에서 지하 계단 열쇠 → 검은 원의 맨 아래로 탈출<br>폰: 왼쪽 드래그 이동 · 오른쪽 드래그 둘러보기 · 📱던지기로 소리 유인<br>PC: 클릭 후 마우스 · WASD · Shift 달리기 · C 살금 · E 숨기 · F 던지기<br>🎧 이어폰 권장</p>
+  <p class="muted">나: 김도윤 (1학년 4반)<br>목표: 교무실 체육복 → 체육관 열쇠 → 지하 계단. 그 아래로는 끝없이 이어지는 층… 계단이나 빨간 문을 찾아 계속 내려가자<br>폰: 왼쪽 드래그 이동 · 오른쪽 드래그 둘러보기 · 📱던지기로 소리 유인<br>PC: 클릭 후 마우스 · WASD · Shift 달리기 · C 살금 · E 숨기 · F 던지기<br>🎧 이어폰 권장</p>
   <button id="startB">시작하기</button>
 </div></div>
 
@@ -115,7 +124,8 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   <p id="deadWhy"></p>
   <div class="rule" id="deadRule"></div>
   <p class="muted" id="deadNew"></p>
-  <button id="retryB">다시 하기</button>
+  <button id="retryB">이 층에서 다시 하기</button>
+  <button class="g" id="restartB">1층부터 다시</button>
 </div></div>
 
 <div class="modal" id="win"><div class="card">
@@ -124,6 +134,6 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   <p class="muted">프로토타입은 여기까지예요. 다음 층은 업데이트 예정!</p>
   <button id="againB">처음부터 다시</button>
 </div></div>
-<script type="module" src="game.js?v=4"></script>
+<script type="module" src="game.js?v=5"></script>
 </body>
 </html>

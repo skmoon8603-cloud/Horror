@@ -33,7 +33,7 @@ const NPCS = [ // 1학년 4반 친구들 (앉아 있는 책상 칸)
 const S = 1.2, WALL_H = 3;
 const W = 58, H = 27;
 const FLOOR = 0, WALL = 1, DOOR = 3, LOCK = 4, STAIR = 5, LOCKER = 6, MIRROR = 7, DESK = 8;
-const T = new Uint8Array(W * H).fill(WALL), RM = new Uint8Array(W * H);
+let T = new Uint8Array(W * H).fill(WALL), RM = new Uint8Array(W * H);
 const ix = (x, y) => y * W + x;
 const tt = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? WALL : T[ix(x, y)];
 const rr = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? 0 : RM[ix(x, y)];
@@ -57,7 +57,7 @@ const solidList = [
 for (const y of [18, 21, 24]) { for (let x = 38; x <= 44; x++) solidList.push([x, y]); for (let x = 48; x <= 54; x++) solidList.push([x, y]); }
 for (let y = 5; y <= 9; y++) for (const x of [21, 22]) solidList.push([x, y]); // 화장실 칸
 for (const [x, y] of solidList) T[ix(x, y)] = DESK;
-const LOCKERS = [[4, 11], [11, 11], [21, 11], [33, 11], [45, 11], [13, 14], [20, 14], [31, 14], [39, 14], [53, 14]];
+let LOCKERS = [[4, 11], [11, 11], [21, 11], [33, 11], [45, 11], [13, 14], [20, 14], [31, 14], [39, 14], [53, 14]].map(([x, y]) => [x, y, 0, y === 11 ? 1 : -1]); // [x, y, 바라보는 방향 x, y]
 for (const [x, y] of LOCKERS) T[ix(x, y)] = LOCKER;
 let stairsOpen = false;
 const solid = (x, y) => { const t = tt(x, y); return t === WALL || t === DESK || t === LOCKER || t === MIRROR || (t === LOCK && !stairsOpen); };
@@ -95,6 +95,7 @@ const camera = new THREE.PerspectiveCamera(72, 1, 0.04, 70); scene.add(camera);
 function resize() { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.fov = innerWidth < innerHeight ? 80 : 70; camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
 scene.add(new THREE.HemisphereLight(0xb8c0cc, 0x3a342c, 1.5)); scene.add(new THREE.AmbientLight(0x9aa0a8, 0.55)); // 화면 전체가 보이도록 밝게
+const sceneBase = new Set(scene.children);
 
 // 손전등 (카메라에 붙어 있음)
 const flash = new THREE.SpotLight(0xfff0d6, 30, 22, 0.6, 0.6, 1.6);
@@ -137,7 +138,7 @@ for (const k in floorMats) addMerged(geos[k], floorMats[k], false);
 
 const staticG = new THREE.Group(); scene.add(staticG); // 움직이지 않는 가구: 나중에 재질별로 합쳐서 그리기 횟수를 줄인다 (폰 성능)
 const place = (obj, x, y, rot = 0, h = 0) => { obj.position.set(x * S, h, y * S); obj.rotation.y = rot; obj.traverse((o) => { if (o.isMesh) { o.receiveShadow = true; } }); staticG.add(obj); return obj; };
-function mergeStatic(root) {
+function mergeStatic(root, target = scene) {
   root.updateMatrixWorld(true);
   const byMat = new Map(), keep = [];
   root.traverse((o) => {
@@ -149,9 +150,9 @@ function mergeStatic(root) {
     if (!byMat.has(o.material)) byMat.set(o.material, { list: [], cast: false });
     const e = byMat.get(o.material); e.list.push(g); e.cast = e.cast || o.castShadow;
   });
-  for (const o of keep) { const m = o.matrixWorld.clone(); o.removeFromParent(); m.decompose(o.position, o.quaternion, o.scale); scene.add(o); }
-  for (const [mat, e] of byMat) { const m = new THREE.Mesh(mergeGeometries(e.list), mat); m.castShadow = e.cast; m.receiveShadow = true; scene.add(m); }
-  scene.remove(root);
+  for (const o of keep) { const m = o.matrixWorld.clone(); o.removeFromParent(); m.decompose(o.position, o.quaternion, o.scale); target.add(o); }
+  for (const [mat, e] of byMat) { const m = new THREE.Mesh(mergeGeometries(e.list), mat); m.castShadow = e.cast; m.receiveShadow = true; target.add(m); }
+  root.removeFromParent();
 }
 // 가구
 for (const [x, y] of solidList) {
@@ -289,6 +290,102 @@ for (const n of NPCS) { // 1학년 4반 친구들
   npcModels.push({ model: st, px: n.x + 0.5, py: n.y + 0.85, name: n.name, lines: n.lines, i: 0 });
 }
 
+// ===== 층 (1층 = 학교, 그 아래로 백룸처럼 끝없이 이어지는 지하층) =====
+const level1 = new THREE.Group(); for (const o of scene.children.slice()) if (!sceneBase.has(o)) level1.add(o); scene.add(level1);
+const LV0 = { depth: 0, T, RM, LOCKERS, start: [7.5, 8.5], group: level1 };
+const levels = {};
+const rngOf = (seed) => { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+const bWallMat = std({ map: TX.backroomWallTex(), roughness: 0.9 }), bCarpet = std({ map: TX.carpetTex(), roughness: 0.95 }), redDoorMat = std({ map: TX.redDoorTex(), roughness: 0.6 });
+function genLevel(depth) {
+  if (levels[depth]) return levels[depth];
+  const R = rngOf(depth * 7919 + 13);
+  const T2 = new Uint8Array(W * H).fill(WALL), RM2 = new Uint8Array(W * H);
+  const rooms = [];
+  for (let k = 0; k < 400 && rooms.length < 14; k++) {
+    const w = 4 + ((R() * 8) | 0), h = 3 + ((R() * 5) | 0), x = 1 + ((R() * (W - w - 2)) | 0), y = 1 + ((R() * (H - h - 2)) | 0);
+    if (rooms.some((r) => x < r.x + r.w + 2 && x + w + 2 > r.x && y < r.y + r.h + 2 && y + h + 2 > r.y)) continue;
+    rooms.push({ x, y, w, h });
+  }
+  rooms.forEach((r, i) => { r.type = i < 3 ? 1 : i === 3 || i === 7 ? 3 : 0; for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) { T2[ix(x, y)] = FLOOR; RM2[ix(x, y)] = r.type; } });
+  const ccx = (r) => r.x + (r.w >> 1), ccy = (r) => r.y + (r.h >> 1);
+  const carve = (x, y) => { if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1) return; const i = ix(x, y); if (T2[i] === WALL) { T2[i] = FLOOR; RM2[i] = 0; } };
+  const corridor = (a, b) => {
+    let x = ccx(a), y = ccy(a); const tx = ccx(b), ty = ccy(b), wd = R() < 0.5 ? 2 : 3;
+    const sx = () => { while (x !== tx) { for (let k = 0; k < wd; k++) carve(x, y + k); x += Math.sign(tx - x); } };
+    const sy = () => { while (y !== ty) { for (let k = 0; k < wd; k++) carve(x + k, y); y += Math.sign(ty - y); } };
+    if (R() < 0.5) { sx(); sy(); } else { sy(); sx(); } for (let k = 0; k < wd; k++) for (let j = 0; j < wd; j++) carve(x + k, y + j);
+  };
+  for (let i = 1; i < rooms.length; i++) { let best = 0, bd = 1e9; for (let j = 0; j < i; j++) { const d = Math.hypot(ccx(rooms[i]) - ccx(rooms[j]), ccy(rooms[i]) - ccy(rooms[j])); if (d < bd) { bd = d; best = j; } } corridor(rooms[i], rooms[best]); }
+  for (let k = 0; k < 4; k++) { const a = rooms[(R() * rooms.length) | 0], b = rooms[(R() * rooms.length) | 0]; if (a !== b) corridor(a, b); }
+  for (const r of rooms) {
+    if (r.type === 0 && r.w >= 7 && r.h >= 5) for (let y = r.y + 2; y < r.y + r.h - 2; y += 3) for (let x = r.x + 2; x < r.x + r.w - 2; x += 3) T2[ix(x, y)] = WALL; // 백룸 기둥
+    if (r.type === 1 && r.w >= 6 && r.h >= 5) for (let y = r.y + 1; y < r.y + r.h - 1; y += 2) for (let x = r.x + 1; x < r.x + r.w - 1; x += 2) T2[ix(x, y)] = DESK;
+  }
+  const start = [rooms[0].x + (rooms[0].w >> 1) + 0.5, rooms[0].y + rooms[0].h - 0.5];
+  const old = [T, RM]; T = T2; RM = RM2; // 거리 계산 동안만 잠깐 바꿔 둔다
+  const dist = new Int32Array(W * H).fill(-1), q = [ix(rooms[0].x, rooms[0].y)]; dist[q[0]] = 0;
+  for (let qi = 0; qi < q.length; qi++) { const c = q[qi], x = c % W, y = (c / W) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const n = ix(x + dx, y + dy); if (solid(x + dx, y + dy) || dist[n] >= 0) continue; dist[n] = dist[c] + 1; q.push(n); } }
+  const far = rooms.slice(1).filter((r) => r.type !== 1 && dist[ix(ccx(r), ccy(r))] > 0).sort((a, b) => dist[ix(ccx(b), ccy(b))] - dist[ix(ccx(a), ccy(a))]);
+  const sr = far[0] || rooms[rooms.length - 1], dr = far[1] || rooms[1];
+  const stair = [ccx(sr), ccy(sr)];
+  for (let y = stair[1]; y <= stair[1] + 1; y++) for (let x = stair[0]; x <= stair[0] + 1; x++) if (x < sr.x + sr.w && y < sr.y + sr.h) T2[ix(x, y)] = STAIR;
+  const door = [ccx(dr), dr.y]; // 방 북쪽 벽에 붙은 빨간 문
+  const lockers = [];
+  for (let k = 0; k < 400 && lockers.length < 7; k++) {
+    const x = 2 + ((R() * (W - 4)) | 0), y = 2 + ((R() * (H - 4)) | 0);
+    if (T2[ix(x, y)] !== FLOOR || RM2[ix(x, y)] !== 0) continue;
+    const n = T2[ix(x, y - 1)] === WALL, s2 = T2[ix(x, y + 1)] === WALL;
+    if (n === s2 || T2[ix(x - 1, y)] !== FLOOR || T2[ix(x + 1, y)] !== FLOOR) continue;
+    const fy = n ? 1 : -1; if (T2[ix(x, y + fy)] !== FLOOR || T2[ix(x, y + 2 * fy)] !== FLOOR) continue;
+    T2[ix(x, y)] = LOCKER; lockers.push([x, y, 0, fy]);
+  }
+  const spawn = []; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (!solid(x, y) && RM2[ix(x, y)] === 0 && dist[ix(x, y)] > 12) spawn.push([x + 0.5, y + 0.5]);
+  T = old[0]; RM = old[1];
+  // ---- 모양 만들기
+  const grp = new THREE.Group(); grp.visible = false; scene.add(grp);
+  const wl = [], fl = { carpet: [], wood: [], woodDark: [] }, lampL = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const t = T2[ix(x, y)], cx0 = (x + 0.5) * S, cz0 = (y + 0.5) * S;
+    if (t === WALL) { let near = false; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < W && yy < H && T2[ix(xx, yy)] !== WALL) near = true; } if (near) wl.push(at(new THREE.BoxGeometry(S, WALL_H, S), cx0, WALL_H / 2, cz0)); continue; }
+    if (t !== STAIR) { const pg = new THREE.PlaneGeometry(S, S); pg.rotateX(-Math.PI / 2); fl[RM2[ix(x, y)] === 1 ? 'wood' : RM2[ix(x, y)] === 3 ? 'woodDark' : 'carpet'].push(at(pg, cx0, 0, cz0)); }
+    if (x % 3 === 1 && y % 3 === 1) lampL.push(at(new THREE.BoxGeometry(1.1, 0.05, 0.5), cx0, WALL_H - 0.03, cz0));
+  }
+  const mm = (list, mat, cast = true) => { if (!list.length) return null; const m = new THREE.Mesh(mergeGeometries(list), mat); m.receiveShadow = true; m.castShadow = cast; grp.add(m); return m; };
+  mm(wl, bWallMat); mm(fl.carpet, bCarpet, false); mm(fl.wood, floorMats.wood, false); mm(fl.woodDark, floorMats.woodDark, false);
+  const lampMat = std({ color: 0xeeeedd, emissive: 0xf4f0c8, emissiveIntensity: 1.2 }); mm(lampL, lampMat, false);
+  { const ct = TX.ceilTex(); ct.repeat.set(W, H); const c = new THREE.Mesh(new THREE.PlaneGeometry(W * S, H * S), std({ map: ct, color: 0xd8d4b0, roughness: 0.95 })); c.rotation.x = Math.PI / 2; c.position.set(W * S / 2, WALL_H, H * S / 2); grp.add(c); }
+  const stat = new THREE.Group(); grp.add(stat);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (T2[ix(x, y)] === DESK) { const d = MD.studentDesk(); d.position.set((x + 0.5) * S, 0, (y + 0.35) * S); if (R() < 0.25) { d.rotation.z = Math.PI / 2; d.position.y = 0.36; } d.rotation.y = (R() - 0.5) * 0.6; stat.add(d); }
+  for (const [x, y, , fy] of lockers) { const l = MD.locker(); l.position.set((x + 0.5) * S, 0, (y + (fy > 0 ? 0.25 : 0.75)) * S); l.rotation.y = fy > 0 ? 0 : Math.PI; stat.add(l); }
+  mergeStatic(stat, grp);
+  { const sm = std({ map: TX.metalTex('#6c6a64'), roughness: 0.8 }), dk = std({ color: 0x050505, roughness: 1 }); // 아래로 내려가는 계단
+    for (let i = 0; i < 7; i++) { const st = new THREE.Mesh(new THREE.BoxGeometry(2 * S, 0.18, 0.32), sm); st.position.set((stair[0] + 1) * S, -0.09 - 0.18 * i, (stair[1] + 2) * S - 0.16 - 0.32 * i); grp.add(st); }
+    const pit = new THREE.Mesh(new THREE.BoxGeometry(2 * S, 0.02, 2 * S), dk); pit.position.set((stair[0] + 1) * S, -1.4, (stair[1] + 1) * S); grp.add(pit);
+    const sg = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.23, 0.06), [0, 0, 0, 0, 0, 0].map((_, i) => i === 4 || i === 5 ? new THREE.MeshBasicMaterial({ map: TX.exitTex() }) : std({ color: 0xdddddd }))); sg.position.set((stair[0] + 1) * S, 2.55, (stair[1] + 1) * S); grp.add(sg);
+    const gl = new THREE.PointLight(0x30ff80, 1.2, 4, 2); gl.position.set((stair[0] + 1) * S, 2.2, (stair[1] + 1) * S); grp.add(gl); }
+  { const dm = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.1), redDoorMat); dm.position.set((door[0] + 0.5) * S, 1.05, door[1] * S + 0.012); grp.add(dm); const rl = new THREE.PointLight(0xff3020, 1.0, 4, 2); rl.position.set((door[0] + 0.5) * S, 2.2, door[1] * S + 0.6); grp.add(rl); }
+  // 색연필 그림 (3반처럼 전멸한 방 벽)
+  const dsp = []; for (const r of rooms.filter((r) => r.type === 3)) for (let x = r.x; x < r.x + r.w; x += 2) if (T2[ix(x, r.y - 1)] === WALL) dsp.push([x + 0.5, r.y, 0]);
+  dsp.slice(0, 10).forEach(([x, y, sd], i) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 1.5), std({ map: drawTexCache[i] || (drawTexCache[i] = TX.pencilPersonTex(i + 1, false)), transparent: true, roughness: 0.9, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 })); m.position.set(x * S, 1.15, y * S + 0.012); m.rotation.z = (R() - 0.5) * 0.15; grp.add(m); });
+  const fl2 = []; for (let i = 0; i < Math.min(5, lampL.length); i++) { const k = (R() * lampL.length) | 0; const p = lampL[k].boundingBox || (lampL[k].computeBoundingBox(), lampL[k].boundingBox); const c = new THREE.Vector3(); p.getCenter(c); const pl = new THREE.PointLight(0xfff2c0, 4, 10, 2); pl.position.set(c.x, WALL_H - 0.3, c.z); grp.add(pl); fl2.push({ p: pl, base: 4, t: R() * 4, l: null }); }
+  const L = { depth, T: T2, RM: RM2, LOCKERS: lockers, start, group: grp, spawn, stair, door, flick: fl2 };
+  levels[depth] = L; return L;
+}
+let level = 0, LV = LV0, transitioning = false;
+function applyLevel(L) { T = L.T; RM = L.RM; LOCKERS = L.LOCKERS; level1.visible = L === LV0; for (const k in levels) levels[k].group.visible = levels[k] === L; LV = L; level = L.depth; scene.fog.color.set(level ? 0x14140c : 0x0a0b0d); }
+const floorName = (d) => d === 0 ? '1층' : '지하 ' + d + '층';
+function descend() {
+  if (transitioning) return; transitioning = true; playerSteps(0); monitorSteps(null);
+  $('fade').classList.add('show'); noise(1.2, 0.5, 150, 0, 1);
+  setTimeout(() => {
+    const L = genLevel(level + 1); applyLevel(L);
+    save.deep = Math.max(save.deep || 0, level); persist();
+    reset(true); $('floorBig').textContent = floorName(level); $('floorBig').classList.add('show');
+    setTimeout(() => { $('fade').classList.remove('show'); transitioning = false; }, 400);
+    setTimeout(() => $('floorBig').classList.remove('show'), 2600);
+  }, 700);
+}
+
 // ===== 입력 =====
 const keys = {};
 let yaw = 0, pitch = 0;
@@ -376,26 +473,44 @@ let hasPE = false, throws = 1, thrown = [], peMon = null, gymT = 0, whistled = f
 const wcOk = (x, y) => !solid(x, y) && (rr(x, y) === 2 || (x === 18 && y === 10)); // 도플갱어는 화장실 밖으로 못 나온다
 const gymOk = (x, y) => !solid(x, y) && rr(x, y) === 6;
 const breakLen = (p) => Math.max(35, 62 - p * 5), CLASS_LEN = 22;
+const trailGeo = new THREE.CylinderGeometry(0.2, 0.23, 1, 10, 1, true);
 function addMon(kind, x, y) {
-  const model = kind === 'doll' ? MD.makeDecal() : kind === 'monitor' ? MD.makeTextbookGirl() : kind === 'pe' ? MD.makePE() : kind === 'ball' ? MD.makeBall((Math.random() * 3) | 0) : MD.makeStudent();
+  const model = kind === 'doll' ? MD.makeGiantHand() : kind === 'monitor' ? MD.makeTextbookGirl() : kind === 'pe' ? MD.makePE() : kind === 'ball' ? MD.makeBall((Math.random() * 3) | 0) : MD.makeStudent();
   if (kind === 'mirror') MD.setGrin(model, true);
+  model.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   scene.add(model);
   const m = { kind, x, y, path: [], pathT: 0, state: 'wander', alertT: 0, target: null, rustleT: 0, model, life: 13, fx: 0, fy: 1 };
+  if (kind === 'doll') { // 손 뒤로 길게 끌려오는 팔
+    m.trailG = new THREE.Group(); scene.add(m.trailG); m.trail = [];
+    for (let i = 0; i < 26; i++) { const c = new THREE.Mesh(trailGeo, model.userData.skin); c.castShadow = true; c.visible = false; m.trailG.add(c); }
+  }
   mons.push(m); return m;
 }
-function removeMon(m) { scene.remove(m.model); mons = mons.filter((o) => o !== m); }
+function removeMon(m) { scene.remove(m.model); if (m.trailG) scene.remove(m.trailG); mons = mons.filter((o) => o !== m); }
+function farSpawn() { const c = LV.spawn; let best = c[0], bd = -1; for (let i = 0; i < 40; i++) { const p = c[(Math.random() * c.length) | 0]; const d = Math.hypot(p[0] - P.x, p[1] - P.y); if (d > bd) { bd = d; best = p; } } return best; }
 function reset() {
-  if (mons) for (const m of mons) scene.remove(m.model);
-  P = { x: 7.5, y: 8.5 }; yaw = 0; pitch = 0;
-  mons = []; addMon('doll', 30.5, 5.5); peMon = addMon('pe', PE_MON[0], PE_MON[1]); peMon.state = 'idle';
-  phase = 'break'; period = 1; phaseT = breakLen(1); runTime = 0; hidden = null; hideT = 0; alive = true; killer = null; deadT = 0;
-  stairsOpen = false; lockDoor.visible = true; lockDoor.position.y = 1.125; hasKey = false; hasPE = false; throws = 1; gymT = 0; whistled = false;
-  keyPos = KEY_SPOT; keyObj.visible = true; keyObj.position.set(keyPos[0] * S, 0.008, keyPos[1] * S);
-  peItem.visible = true; for (const b of broomObjs) b.visible = true; for (const p of thrown) scene.remove(p.obj); thrown = [];
-  for (const id in noteMeshes) noteMeshes[id].visible = !save.notes.includes(id);
-  mir = { st: 'normal', t: 0, hist: [], pose: null, cd: 0, chaser: null }; MD.setGrin(dop, false); crackMesh.visible = false; glass.visible = true;
-  if (fold) { for (const p of foldPanels) p.visible = false; crease.visible = false; fold = null; }
-  buildDrawings(); updKey(); monitorSteps(null); playerSteps(0);
+  if (mons) for (const m of mons.slice()) removeMon(m);
+  P = { x: LV.start[0], y: LV.start[1] }; yaw = 0; pitch = 0;
+  mons = [];
+  phase = 'break'; period = 1; phaseT = breakLen(1); hidden = null; hideT = 0; alive = true; killer = null; deadT = 0;
+  for (const p of thrown) scene.remove(p.obj); thrown = []; noiseEvents = [];
+  if (fold) endFold();
+  $('vent').classList.remove('show');
+  if (level === 0) {
+    runTime = 0;
+    addMon('doll', 30.5, 5.5); peMon = addMon('pe', PE_MON[0], PE_MON[1]); peMon.state = 'idle';
+    stairsOpen = false; lockDoor.visible = true; lockDoor.position.y = 1.125; hasKey = false; hasPE = false; throws = 1; gymT = 0; whistled = false;
+    keyPos = KEY_SPOT; keyObj.visible = true; keyObj.position.set(keyPos[0] * S, 0.008, keyPos[1] * S);
+    peItem.visible = true; for (const b of broomObjs) b.visible = true;
+    for (const id in noteMeshes) noteMeshes[id].visible = !save.notes.includes(id);
+    mir = { st: 'normal', t: 0, hist: [], pose: null, cd: 0, chaser: null }; MD.setGrin(dop, false); crackMesh.visible = false; glass.visible = true;
+    buildDrawings();
+  } else {
+    peMon = null; throws = Math.max(throws, 1 + (level > 2 ? 1 : 0));
+    const n = Math.min(3, 1 + Math.floor(level / 2));
+    for (let i = 0; i < n; i++) { const p = farSpawn(); addMon('doll', p[0], p[1]); }
+  }
+  updKey(); monitorSteps(null); playerSteps(0); $('floorChip').textContent = floorName(level);
 }
 function updKey() {
   $('keyChip').textContent = (hasKey ? '🔑 열쇠' : '🔑 없음') + ' · ' + (hasPE ? '👕 체육복' : '👔 교복');
@@ -428,7 +543,7 @@ function follow(m, speed, dt) {
 const inClass = () => rr(P.x | 0, P.y | 0) === 1;
 function spawnMonitor() {
   if (mons.some((m) => m.kind === 'monitor')) return;
-  const ends = [[1.5, 12.5], [56.5, 12.5]].sort((a, b) => Math.hypot(b[0] - P.x, b[1] - P.y) - Math.hypot(a[0] - P.x, a[1] - P.y));
+  const ends = level ? [farSpawn(), farSpawn()] : [[1.5, 12.5], [56.5, 12.5]].sort((a, b) => Math.hypot(b[0] - P.x, b[1] - P.y) - Math.hypot(a[0] - P.x, a[1] - P.y));
   const m = addMon('monitor', ends[0][0], ends[0][1]); m.state = 'patrol'; m.target = ends[1];
   toast('🔔 수업 시간이다. 복도에서 발소리가 들린다…', 2600);
 }
@@ -467,6 +582,7 @@ function update(dt) {
   P.noise = noiseR;
 
   // 쪽지·열쇠·계단
+  if (level === 0) {
   for (const id in NOTE_SPOTS) if (noteMeshes[id].visible) { const [x, y] = NOTE_SPOTS[id]; if (Math.hypot(x - P.x, y - P.y) < 0.75) { noteMeshes[id].visible = false; if (!save.notes.includes(id)) { save.notes.push(id); persist(); } showNote(id); } }
   if (!hasKey && Math.hypot(keyPos[0] - P.x, keyPos[1] - P.y) < 0.75) { hasKey = true; keyObj.visible = false; updKey(); noise(0.4, 0.5, 4000, 0, 3); P.noise = 6; toast('🔑 지하 계단 열쇠를 주웠다! <br>찰랑— 소리가 울렸다…'); }
   if (!hasPE && peItem.visible && Math.hypot(PE_SPOT[0] - P.x, PE_SPOT[1] - P.y) < 0.9) { hasPE = true; peItem.visible = false; updKey(); toast('👕 분실물 상자에서 체육복을 꺼내 갈아입었다'); }
@@ -477,13 +593,15 @@ function update(dt) {
   }
   if (stairsOpen && lockDoor.position.y < 3.4) lockDoor.position.y += dt * 1.5; // 문이 위로 들려 사라짐
   if (stairsOpen && lockDoor.position.y >= 3.4) lockDoor.visible = false;
-  if (tt(P.x | 0, P.y | 0) === STAIR) return win();
+  }
+  if (tt(P.x | 0, P.y | 0) === STAIR) return descend();
+  if (level && LV.door && Math.hypot(LV.door[0] + 0.5 - P.x, LV.door[1] + 0.45 - P.y) < 0.75) { toast('빨간 문을 열었다…'); return descend(); }
 
   // 사물함 버튼
   hideB.style.visibility = (hidden || nearLocker()) ? 'visible' : 'hidden';
   hideB.innerHTML = hidden ? '<span>🚪</span>나가기' : '<span>🚪</span>숨기';
 
-  updateMirror(dt);
+  if (level === 0) updateMirror(dt);
   if (!alive) return;
   updateFold(dt);
   if (!alive) return;
@@ -506,14 +624,14 @@ function update(dt) {
       const done = follow(m, m.state === 'hunt' ? 3.3 : 1.0, dt);
       if (m.state === 'hunt') { m.alertT -= dt; if (done && !fold) startFold(m); else if (done && m.alertT <= 0) { m.state = 'wander'; m.path = []; } }
       m.rustleT -= dt; if (m.rustleT <= 0) { m.rustleT = 1.6 + Math.random() * 2; if (d < 14) noise(0.35, 0.3 * (1 - d / 14), 250 + Math.random() * 150, panOf(m.x, m.y), 3); } // 먹물이 끈적하게 번지는 소리
-      if (!hidden && d < 0.7 && !fold) startFold(m, true);
+      if (!hidden && d < 0.7 && !fold) { m.target = [P.x, P.y]; startFold(m); }
     } else if (m.kind === 'monitor') { // 국어책 괴물: 수업 시간에 교실 밖에 있는 사람만 노린다
       monitor = m;
       const outside = !inClass();
       if (outside && m.state !== 'chase') { m.state = 'chase'; MD.setGrin(m.model, true); if (d < 30) speak('수업 시간에 돌아다녔어!!', 1.7, 1.1, 1); }
       if (!outside && m.state === 'chase') { m.state = 'patrol'; MD.setGrin(m.model, false); m.path = []; }
-      if (m.state === 'chase') { if (m.pathT <= 0) { m.pathT = 0.25; const tx = hidden ? hidden[0] : P.x, ty = hidden ? hidden[1] + (hidden[1] === 11 ? 1 : -1) : P.y; m.path = bfs(m.x, m.y, tx, ty) || []; } follow(m, 3.15, dt); }
-      else { if (!m.path || !m.path.length) { m.target = m.x < 28 ? [56, 12] : [1, 12]; m.path = bfs(m.x, m.y, m.target[0], m.target[1]) || []; } follow(m, 1.1, dt); }
+      if (m.state === 'chase') { if (m.pathT <= 0) { m.pathT = 0.25; const tx = hidden ? hidden[0] + hidden[2] : P.x, ty = hidden ? hidden[1] + hidden[3] : P.y; m.path = bfs(m.x, m.y, tx, ty) || []; } follow(m, 3.15, dt); }
+      else { if (!m.path || !m.path.length) { m.target = level ? farSpawn() : m.x < 28 ? [56, 12] : [1, 12]; m.path = bfs(m.x, m.y, m.target[0], m.target[1]) || []; } follow(m, 1.1, dt); }
       if (m.state === 'chase' && d < (hidden ? 1.2 : 0.65)) return die('bell', m);
     } else if (m.kind === 'mirror') {
       m.life -= dt;
@@ -540,7 +658,7 @@ function update(dt) {
   }
   noiseEvents = noiseEvents.filter((e) => (e.t -= dt) > 0);
   updateThrown(dt);
-  updateTalk(dt);
+  if (level === 0) updateTalk(dt);
   monitorSteps(monitor);
   beatT -= dt;
   if (nearest < 8 && beatT <= 0) { heartbeat(); beatT = 0.35 + nearest / 8 * 0.9; }
@@ -579,55 +697,80 @@ function updateTalk(dt) {
   }
   if (lastTalk && Math.hypot(lastTalk.px - P.x, lastTalk.py - P.y) > 2.2) lastTalk = null;
 }
-// 데칼코마니: 벽 속에 숨어 움직이며 종이처럼 변한 자국만 보인다. 접을 때만 거대한 손이 나온다
+// ===== 데칼코마니: 본체는 거대한 손. 바닥을 손가락으로 기어 다니고, 팔은 어둠 속까지 길게 이어진다 =====
+const _v = new THREE.Vector3(), _u = new THREE.Vector3(0, 1, 0), _q = new THREE.Quaternion();
 function placeDecal(m, md, dt) {
-  const u = md.userData; md.rotation.set(0, 0, 0); md.position.set(0, 0, 0);
-  const inCorr = rr(m.x | 0, m.y | 0) === 0 && m.y > 10.5 && m.y < 15.5;
-  if (inCorr) { const north = m.y < 13; u.patch.position.set(m.x * S, 1.35, north ? 11 * S + 0.015 : 15 * S - 0.015); u.patch.rotation.set(0, north ? 0 : Math.PI, 0); }
-  else { u.patch.position.set(m.x * S, 0.014, m.y * S); u.patch.rotation.set(-Math.PI / 2, 0, tAll * 0.1); }
-  const pul = 1 + Math.sin(tAll * (m.state === 'hunt' ? 10 : 2)) * 0.05; u.patch.scale.set(pul, pul, 1);
-  const folding = fold && fold.m === m;
-  u.arm.visible = !!folding && fold.t > 0.25 && fold.t < 1.9;
-  if (u.arm.visible) {
-    const out = fold.t < 0.95 ? Math.min(1, (fold.t - 0.25) / 0.5) : Math.max(0, 1 - (fold.t - 1.4) / 0.5);
-    u.arm.position.copy(u.patch.position);
-    const tgt = new THREE.Vector3(fold.x * S, 0.9, fold.cz * S); if (killer && killer.rule === 'run') tgt.copy(camera.position);
-    u.arm.lookAt(tgt); u.arm.translateZ(-2.0 + out * 3.0);
-    u.hand.rotation.x = fold.t > 0.7 && fold.t < 1.1 ? 0.6 : 0;
+  const u = md.userData;
+  if (fold && fold.m === m && fold.grip) { // 스케치북 모서리를 움켜쥔 상태
+    md.position.copy(fold.grip); md.lookAt(fold.hingeMid); MD.curlHand(md, tAll, false, Math.min(1, fold.t * 3));
+  } else {
+    md.position.set(m.x * S, 0.3 + (m.state === 'hunt' ? Math.abs(Math.sin(tAll * 14)) * 0.2 : 0), m.y * S);
+    md.rotation.set(0, Math.atan2(m.fx, m.fy), 0); MD.curlHand(md, tAll * (m.state === 'hunt' ? 2.2 : 0.8), true, 0);
   }
+  // 팔: 지나온 길을 따라 이어진다
+  const wrist = md.localToWorld(_v.set(0, 0.05, -0.8)).clone();
+  const tr = m.trail;
+  if (!tr.length || tr[0].distanceTo(wrist) > 0.5) { tr.unshift(wrist.clone()); if (tr.length > 27) tr.pop(); } else tr[0].copy(wrist);
+  if (tr.length === 1) for (let i = 1; i < 6; i++) tr.push(wrist.clone().add(new THREE.Vector3(-Math.sin(md.rotation.y), 0.05 * i, -Math.cos(md.rotation.y)).multiplyScalar(0.4 * i)));
+  m.trailG.children.forEach((c, i) => {
+    const a = tr[i], b = tr[i + 1]; if (!a || !b) { c.visible = false; return; }
+    const len = a.distanceTo(b); if (len < 0.01) { c.visible = false; return; }
+    c.visible = true; c.position.copy(a).add(b).multiplyScalar(0.5); c.position.y = Math.max(c.position.y, 0.42 + i * 0.02);
+    c.quaternion.setFromUnitVectors(_u, _v.copy(b).sub(a).normalize()); c.scale.set(1.9 + i * 0.03, len + 0.15, 1.9 + i * 0.03);
+  });
 }
 
-// ===== 데칼코마니가 복도를 접는다 =====
+// ===== 데칼코마니가 바닥을 스케치북처럼 움켜쥐고 접는다 =====
 let fold = null;
-const foldMat = std({ map: TX.foldTex(), roughness: 0.8 });
-const foldPanels = [0, 1].map(() => { const p = new THREE.Mesh(new THREE.BoxGeometry(3.8, WALL_H, 0.12), foldMat); p.visible = false; p.castShadow = true; scene.add(p); return p; });
-const creaseMat = new THREE.MeshBasicMaterial({ color: 0x050303, transparent: true, opacity: 0 });
-const crease = new THREE.Group(); crease.visible = false; scene.add(crease); // 바닥·벽·천장에 생기는 접힌 자국
-for (const [w, h, d, y, z] of [[0.05, 0.012, 4.8, 0.006, 0], [0.05, WALL_H, 0.012, WALL_H / 2, -2.39], [0.05, WALL_H, 0.012, WALL_H / 2, 2.39], [0.05, 0.012, 4.8, WALL_H - 0.006, 0]]) { const c = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), creaseMat); c.position.set(0, y - WALL_H / 2, z); crease.add(c); }
-function startFold(m, instant) {
-  fold = { m, x: m.x, y: m.y, t: instant ? 0.55 : 0, killed: false };
-  const r = rr(m.x | 0, m.y | 0), cz = r === 0 ? 13.0 : m.y; fold.cz = cz; // 복도에서는 복도 가운데를 기준으로 접는다
-  for (const p of foldPanels) { p.visible = true; p.position.set(m.x * S, WALL_H / 2, cz * S); }
-  crease.visible = true; crease.position.set(m.x * S, WALL_H / 2, cz * S);
-  noise(0.9, 0.7, 180, panOf(m.x, m.y), 2); noise(0.6, 0.4, 2600, panOf(m.x, m.y), 1);
+const paperMat = std({ map: TX.sketchPaperTex(), roughness: 0.9 });
+const pageRoot = new THREE.Group(); pageRoot.visible = false; scene.add(pageRoot);
+const PAGE_N = 4, pagePivots = [], pageMeshes = [];
+{ let parent = pageRoot; for (let i = 0; i < PAGE_N; i++) { const pv = new THREE.Group(); parent.add(pv); const ms = new THREE.Mesh(new THREE.BoxGeometry(1, 0.05, 1), [paperMat, paperMat, paperMat, paperMat, paperMat, paperMat]); ms.castShadow = ms.receiveShadow = true; pv.add(ms); pagePivots.push(pv); pageMeshes.push(ms); parent = pv; } }
+const voidMesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: 0x020202 })); voidMesh.rotation.x = -Math.PI / 2; voidMesh.visible = false; scene.add(voidMesh);
+function floorMatAt(x, y) { if (level) { const r = rr(x, y); return r === 1 ? floorMats.wood : r === 3 ? floorMats.woodDark : bCarpet; } return floorMats[floorKey(x, y)] || floorMats.vinyl; }
+function startFold(m) {
+  const tx = Math.floor(m.target ? m.target[0] : m.x), ty = Math.floor(m.target ? m.target[1] : m.y);
+  const run = (dx, dy) => { let n = 0; while (n < 6 && !solid(tx + dx * (n + 1), ty + dy * (n + 1))) n++; return n; };
+  const axisX = run(1, 0) + run(-1, 0) >= run(0, 1) + run(0, -1); // 복도가 뻗은 방향
+  let a0, a1; // 복도 폭 (가로지르는 칸 범위)
+  if (axisX) { a0 = ty - run(0, -1); a1 = ty + run(0, 1); } else { a0 = tx - run(-1, 0); a1 = tx + run(1, 0); }
+  if (a1 - a0 > 4) { const c = axisX ? ty : tx; a0 = Math.max(a0, c - 2); a1 = Math.min(a1, c + 2); }
+  const L = 3.4, c = (axisX ? tx : ty) + 0.5, sgn = Math.random() < 0.5 ? 1 : -1;
+  const hinge = c - sgn * L / 2, crossMid = (a0 + a1 + 1) / 2, wd = (a1 - a0 + 1) * S, seg = L * S / PAGE_N;
+  // 복도를 가로지르는 선을 축으로, 바닥이 스케치북 한 장처럼 들려 올라와 덮친다
+  if (axisX) { pageRoot.position.set(hinge * S, 0.03, crossMid * S); pageRoot.rotation.set(0, sgn * Math.PI / 2, 0); }
+  else { pageRoot.position.set(crossMid * S, 0.03, hinge * S); pageRoot.rotation.set(0, sgn > 0 ? 0 : Math.PI, 0); }
+  pageRoot.visible = true;
+  const top = floorMatAt(tx, ty);
+  pagePivots.forEach((pv, i) => { pv.position.set(0, 0, i ? seg : 0); pv.rotation.set(0, 0, 0); });
+  pageMeshes.forEach((ms) => { ms.scale.set(wd, 1, seg); ms.position.set(0, 0, seg / 2); ms.material[2] = top; });
+  voidMesh.scale.set(axisX ? L * S : wd, axisX ? wd : L * S, 1); voidMesh.visible = false;
+  voidMesh.position.set(axisX ? c * S : crossMid * S, 0.004, axisX ? crossMid * S : c * S); voidMesh.rotation.set(-Math.PI / 2, 0, 0);
+  const hingeMid = axisX ? new THREE.Vector3(hinge * S, 0.4, crossMid * S) : new THREE.Vector3(crossMid * S, 0.4, hinge * S);
+  fold = { m, t: 0, killed: false, axisX, a0, a1, c, L, x: tx + 0.5, y: ty + 0.5, hingeMid, grip: null, start: m.model.position.clone() };
+  speak('데칼코마니?', 0.2, 0.75, 1);
 }
+function endFold() { pageRoot.visible = false; voidMesh.visible = false; if (fold) { const m = fold.m; m.state = 'wander'; m.path = []; m.alertT = 0; m.target = null; } fold = null; }
 function updateFold(dt) {
   if (!fold) return;
-  fold.t += dt; const t = fold.t, near = Math.hypot(fold.x - P.x, fold.y - P.y);
-  creaseMat.opacity = Math.min(0.95, t * 1.6); crease.scale.x = 1 + Math.sin(t * 40) * 0.5 * (t < 0.7 ? 1 : 0);
-  const open = 2.2, k = t < 0.7 ? 0 : t < 0.92 ? (t - 0.7) / 0.22 : t < 1.5 ? 1 : t < 2.1 ? 1 - (t - 1.5) / 0.6 : 0;
-  const e = k * k * (3 - 2 * k), off = open - (open - 0.07) * e;
-  foldPanels[0].position.z = fold.cz * S - off; foldPanels[1].position.z = fold.cz * S + off;
-  const wob = t < 0.7 ? Math.sin(t * 50) * 0.04 : 0; foldPanels[0].rotation.y = wob; foldPanels[1].rotation.y = -wob;
-  for (const p of foldPanels) { p.scale.x = 0.3 + 0.7 * Math.min(1, t * 2); p.material.opacity = 1; }
-  if (t < 0.7 && near < 5) shakeT = 0.1; // 벽이 쭈글쭈글 흔들린다
-  if (t > 0.6 && t - dt <= 0.6) noise(0.5, 0.5, 900, panOf(fold.x, fold.y), 0.6);
-  if (!fold.killed && t >= 0.92) {
-    fold.killed = true; noise(0.4, 1.2, 120, panOf(fold.x, fold.y), 1); shakeT = near < 8 ? 0.35 : 0;
-    if (!hidden && Math.abs(P.x - fold.x) < 1.6 && Math.abs(P.y - fold.cz) < 2.3) { die('run', null); return; }
+  const f = fold; f.t += dt; const t = f.t, near = Math.hypot(f.x - P.x, f.y - P.y);
+  // 접는 각도: 0.45초까지 손이 모서리를 잡고, 0.45~0.8초에 확 접고, 1.6초부터 펼친다
+  const k = t < 0.45 ? 0 : t < 0.8 ? (t - 0.45) / 0.35 : t < 1.6 ? 1 : t < 2.3 ? 1 - (t - 1.6) / 0.7 : 0;
+  const e = k * k * (3 - 2 * k), A = e * 2.3, share = [0.42, 0.25, 0.18, 0.15];
+  pagePivots.forEach((pv, i) => { pv.rotation.x = -A * share[i] - (t < 0.45 ? Math.sin(t * 60) * 0.015 : 0); });
+  voidMesh.visible = A > 0.08;
+  const last = pagePivots[PAGE_N - 1]; f.grip = last.localToWorld(new THREE.Vector3(0, 0.12, pageMeshes[0].scale.z));
+  if (t < 0.45) { const g0 = f.grip.clone(); f.grip = f.start.clone().lerp(g0, Math.min(1, t / 0.3)); }
+  if (t > 0.3 && t - dt <= 0.3) { noise(0.25, 1.3, 140, panOf(f.x, f.y), 1.2); noise(0.15, 0.8, 2200, panOf(f.x, f.y), 1); if (near < 14) { tak(); shakeT = 0.25; } } // 탁!
+  if (t > 0.45 && t - dt <= 0.45) { noise(0.7, 0.9, 600, panOf(f.x, f.y), 0.5); noise(0.5, 0.6, 3500, panOf(f.x, f.y), 0.7); }
+  if (!f.killed && A > 1.0) {
+    f.killed = true; shakeT = near < 10 ? 0.4 : 0;
+    const across = f.axisX ? P.y : P.x, alongP = f.axisX ? P.x : P.y;
+    if (!hidden && across > f.a0 - 0.2 && across < f.a1 + 1.2 && Math.abs(alongP - f.c) < f.L / 2 + 0.3) { die('run', null); return; }
   }
-  if (t > 2.2) { for (const p of foldPanels) p.visible = false; crease.visible = false; const m = fold.m; m.state = 'wander'; m.path = []; m.alertT = 0; fold = null; }
+  if (t > 2.35) endFold();
 }
+function tak() { const el = $('tak'); el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); }
 let shakeT = 0;
 function moveP(dx, dy) {
   const r = 0.28;
@@ -635,12 +778,12 @@ function moveP(dx, dy) {
   if (!hit(P.x + dx, P.y)) P.x += dx;
   if (!hit(P.x, P.y + dy)) P.y += dy;
 }
-function nearLocker() { for (const [x, y] of LOCKERS) if (Math.hypot(x + 0.5 - P.x, y + 0.5 - P.y) < 1.2) return [x, y]; return null; }
+function nearLocker() { for (const l of LOCKERS) if (Math.hypot(l[0] + 0.5 + l[2] * 0.6 - P.x, l[1] + 0.5 + l[3] * 0.6 - P.y) < 1.0) return l; return null; }
 function hideAct() {
   if (!alive || anyModal() || !started) return;
   if (hidden) return leaveHide();
   const l = nearLocker(); if (!l) return;
-  hidden = l; hideT = 0; P.back = [P.x, P.y, yaw]; P.x = l[0] + 0.5; P.y = l[1] === 11 ? 11.2 : 14.8; yaw = l[1] === 11 ? Math.PI : 0; pitch = 0; noise(0.15, 0.35, 300);
+  hidden = l; hideT = 0; P.back = [P.x, P.y, yaw]; P.x = l[0] + 0.5 - l[2] * 0.25; P.y = l[1] + 0.5 - l[3] * 0.25; yaw = Math.atan2(-l[2], -l[3]); pitch = 0; noise(0.15, 0.35, 300);
   $('vent').classList.add('show');
 }
 function leaveHide() { if (!hidden) return; P.x = P.back[0]; P.y = P.back[1]; hidden = null; noise(0.15, 0.35, 300); $('vent').classList.remove('show'); }
@@ -720,6 +863,7 @@ function frame() {
     // 수업 중 교실 불
     const cl = phase === 'class' ? 1 : 0; classLight.intensity += (cl * 9 - classLight.intensity) * Math.min(1, dt * 3);
     for (const l of classLamps) l.material = cl ? lampOn : lampOff;
+    if (level) for (const f of LV.flick) { f.t -= dt; if (f.t < 0) { f.on = !f.on; f.t = f.on ? 0.6 + Math.random() * 5 : 0.03 + Math.random() * 0.2; } f.p.intensity = f.on === false ? 0.3 : f.base; }
     for (const f of flicker) { f.t -= dt; if (f.t < 0) { f.on = !f.on; f.t = f.on ? 0.5 + Math.random() * 4 : 0.04 + Math.random() * 0.25; } f.p.intensity = f.on === false ? 0.2 : f.base; f.l.material.emissiveIntensity = f.on === false ? 0.1 : 1.4; }
     for (const id in noteMeshes) { const nm = noteMeshes[id]; if (nm.visible) nm.material.emissiveIntensity = 0.6 + Math.sin(tAll * 3) * 0.4; }
     keyObj.rotation.y += dt;
@@ -738,7 +882,7 @@ function frame() {
     }
     // HUD
     const tot = phase === 'break' ? breakLen(period) : CLASS_LEN;
-    $('bell').firstChild.nodeValue = period + '교시 · ' + (phase === 'break' ? '쉬는 시간' : '수업 시간');
+    $('bellTxt').textContent = period + '교시 · ' + (phase === 'break' ? '쉬는 시간' : '수업 시간');
     $('bell').querySelector('small').textContent = fmt(Math.max(0, phaseT)) + (phase === 'break' && phaseT < 10 ? '  ⚠️ 곧 종이 울려요' : '');
     const bar = $('bar').firstElementChild; bar.style.width = Math.max(0, phaseT / tot * 100) + '%'; bar.style.background = phase === 'class' ? '#c33' : phaseT < 10 ? '#fb3' : '#9ad';
     $('ventTxt').textContent = hidden ? '사물함 안 · 숨 참기 ' + Math.max(0, 8 - hideT).toFixed(1) + '초' : '';
@@ -756,7 +900,7 @@ function openBook() {
   if (!started) return;
   const r = Object.keys(RULES).map((k) => save.rules.includes(k) ? '<div class="rule">' + RULES[k].text + '</div>' : '<div class="rule" style="opacity:.35">??? (아직 모르는 규칙)</div>').join('');
   const n = Object.keys(NOTES).filter((k) => save.notes.includes(k)).map((k) => '<div class="rule n"><b>' + NOTES[k].t + '</b><br>' + NOTES[k].b.replace(/\n/g, '<br>') + '</div>').join('');
-  $('bookB').innerHTML = '<p><b>알아낸 규칙</b> <span class="muted">(죽으면서 배운다)</span></p>' + r + '<p><b>주운 쪽지</b> ' + save.notes.length + '/' + Object.keys(NOTES).length + '</p>' + n + '<p class="muted">죽은 횟수 ' + save.deaths + ' · 탈출 ' + save.clears + '번' + (save.best ? ' · 최고 기록 ' + fmt(save.best) : '') + '</p>';
+  $('bookB').innerHTML = '<p><b>알아낸 규칙</b> <span class="muted">(죽으면서 배운다)</span></p>' + r + '<p><b>주운 쪽지</b> ' + save.notes.length + '/' + Object.keys(NOTES).length + '</p>' + n + '<p class="muted">죽은 횟수 ' + save.deaths + ' · 가장 깊이 내려간 곳: ' + (save.deep ? '지하 ' + save.deep + '층' : '1층') + '</p>';
   $('acctLine').textContent = token ? '로그인: ' + (nick || '계정') + ' · 서버에 저장 중' : '게스트 · 이 기기에만 저장 중';
   $('logoutB').style.display = token ? '' : 'none';
   modal('book', true);
@@ -766,6 +910,7 @@ $('bookOk').onclick = () => modal('book', false);
 $('noteOk').onclick = () => modal('note', false);
 $('logoutB').onclick = () => { token = ''; nick = ''; localStorage.removeItem('hor_tok'); modal('book', false); toast('로그아웃했어요 (게스트로 계속)'); };
 $('retryB').onclick = () => { modal('dead', false); $('drawShow').classList.remove('show'); reset(); };
+$('restartB').onclick = () => { modal('dead', false); $('drawShow').classList.remove('show'); applyLevel(LV0); reset(); };
 $('againB').onclick = () => { modal('win', false); reset(); };
 $('startB').onclick = () => { audioInit(); modal('intro', false); reset(); started = true; bellSound(1.06); };
 function goIntro() { modal('login', false); modal('intro', true); }
@@ -782,4 +927,4 @@ $('loginB').onclick = async () => {
 if (token) { $('lmsg').textContent = '저장된 로그인으로 접속 중…'; loadServer().then(goIntro).catch((e) => { if (e.status === 401) { token = ''; localStorage.removeItem('hor_tok'); } $('lmsg').textContent = e.status === 401 ? '다시 로그인해 주세요' : '서버에 연결하지 못했어요. 게스트로 먼저 해 보세요'; }); }
 document.title = GAME_TITLE;
 // 테스트·디버그용
-window.__g = { get noiseEvents() { return noiseEvents; }, throwItem, get npcs() { return npcModels; }, givePE() { hasPE = true; updKey(); }, get calls() { return renderer.info.render.calls; }, get P() { return P; }, get mons() { return mons; }, get mir() { return mir; }, set yaw(v) { yaw = v; }, set pitch(v) { pitch = v; }, get alive() { return alive; }, get save() { return save; }, setPhaseT(v) { phaseT = v; }, get phase() { return phase; }, get stairsOpen() { return stairsOpen; }, giveKey() { hasKey = true; updKey(); }, get keyPos() { return keyPos; } };
+window.__g = { descend, get level() { return level; }, get LV() { return LV; }, get fold() { return fold; }, get noiseEvents() { return noiseEvents; }, throwItem, get npcs() { return npcModels; }, givePE() { hasPE = true; updKey(); }, get calls() { return renderer.info.render.calls; }, get P() { return P; }, get mons() { return mons; }, get mir() { return mir; }, set yaw(v) { yaw = v; }, set pitch(v) { pitch = v; }, get alive() { return alive; }, get save() { return save; }, setPhaseT(v) { phaseT = v; }, get phase() { return phase; }, get stairsOpen() { return stairsOpen; }, giveKey() { hasKey = true; updKey(); }, get keyPos() { return keyPos; } };

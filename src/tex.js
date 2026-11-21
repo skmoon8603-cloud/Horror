@@ -351,3 +351,30 @@ export const gymFloorTex = () => canvasTex(256, 256, (g, w, h) => {
 export const tracksuitTex = () => canvasTex(128, 256, (g, w, h) => {
   g.fillStyle = '#1d2a4f'; g.fillRect(0, 0, w, h); g.fillStyle = '#e8e8e8'; g.fillRect(8, 0, 6, h); g.fillRect(w - 14, 0, 6, h); grain(g, w, h, 10);
 });
+// 스케치북 종이 (접히는 바닥의 뒷면)
+export const sketchPaperTex = () => canvasTex(512, 512, (g, w, h) => {
+  g.fillStyle = '#e4dfcc'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 260; i++) { g.strokeStyle = `rgba(35,40,30,${0.06 + R() * 0.16})`; g.lineWidth = 1 + R() * 1.2; g.beginPath(); const x = R() * w, y = R() * h, a = 0.6 + (R() - 0.5) * 0.3; g.moveTo(x, y); g.lineTo(x + Math.cos(a) * 60, y + Math.sin(a) * 60); g.stroke(); }
+  for (let i = 0; i < 6; i++) { g.strokeStyle = 'rgba(30,30,30,.35)'; g.lineWidth = 2; g.beginPath(); g.moveTo(R() * w, 0); g.bezierCurveTo(R() * w, h * 0.3, R() * w, h * 0.7, R() * w, h); g.stroke(); }
+  stains(g, w, h, 8, '90,80,50', 0.15, 0.25); grain(g, w, h, 12);
+});
+// 백룸처럼 누렇게 바랜 연두색 벽 (지하층)
+export const backroomWallTex = () => canvasTex(256, 512, (g, w, h) => {
+  g.fillStyle = '#b9bf8c'; g.fillRect(0, 0, w, h);
+  const mid = h * 0.6; g.fillStyle = '#7f8d63'; g.fillRect(0, mid, w, h - mid); g.fillStyle = '#4f5a3c'; g.fillRect(0, mid - 5, w, 6); g.fillStyle = '#2e3324'; g.fillRect(0, h - 14, w, 14);
+  for (let x = 0; x < w; x += 16) { g.fillStyle = 'rgba(80,90,50,.12)'; g.fillRect(x, 0, 2, mid - 6); }
+  stains(g, w, h, 22, '70,60,20', 0.14, 0.3);
+  const gr = g.createLinearGradient(0, h - 100, 0, h); gr.addColorStop(0, 'rgba(30,25,10,0)'); gr.addColorStop(1, 'rgba(30,25,10,.4)'); g.fillStyle = gr; g.fillRect(0, h - 100, w, 100);
+  grain(g, w, h, 16);
+});
+export const carpetTex = () => canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#8c8a5a'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 9000; i++) { const b = 100 + R() * 70; g.fillStyle = `rgba(${b},${b - 4},${b - 50},.35)`; g.fillRect(R() * w, R() * h, 1.5, 1.5); }
+  stains(g, w, h, 12, '50,40,20', 0.25, 0.25); grain(g, w, h, 10);
+});
+export const redDoorTex = () => canvasTex(128, 256, (g, w, h) => {
+  g.fillStyle = '#5a1818'; g.fillRect(0, 0, w, h); g.strokeStyle = '#2a0a0a'; g.lineWidth = 4; g.strokeRect(10, 10, w - 20, h - 20); g.strokeRect(20, 30, w - 40, 80);
+  g.fillStyle = '#b8b0a0'; g.fillRect(w - 26, h * 0.52, 10, 22);
+  g.fillStyle = '#eee'; g.font = 'bold 20px sans-serif'; g.textAlign = 'center'; g.fillText('▼ 아래로', w / 2, 76);
+  stains(g, w, h, 10, '20,0,0', 0.3, 0.3); grain(g, w, h, 14);
+});
