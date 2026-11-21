@@ -1,0 +1,263 @@
+// 캐릭터·괴물·가구 모델 (기본 도형을 실제 비율로 조립)
+import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import * as TX from './tex.js';
+
+const std = (o) => new THREE.MeshStandardMaterial(o);
+const cache = {};
+const once = (k, f) => cache[k] || (cache[k] = f());
+export const M = {
+  skin: () => once('skin', () => std({ color: 0xd8b5a2, roughness: 0.5 })),
+  hair: () => once('hair', () => std({ color: 0x17110d, roughness: 0.55 })),
+  shirt: () => once('shirt', () => std({ color: 0xeef0f2, roughness: 0.75 })),
+  knit: () => once('knit', () => std({ map: TX.knitTex(), roughness: 0.95 })),
+  pants: () => once('pants', () => std({ map: TX.checkPantsTex(), roughness: 0.85 })),
+  shoeBlk: () => once('shoeBlk', () => std({ color: 0x141414, roughness: 0.9 })),
+  shoeWht: () => once('shoeWht', () => std({ color: 0xe9e6df, roughness: 0.7 })),
+  suit: () => once('suit', () => std({ color: 0x1b1c20, roughness: 0.8 })),
+  paleSkin: () => once('pale', () => std({ color: 0xc9c3b8, roughness: 0.4 })),
+  steel: () => once('steel', () => std({ color: 0x8b9096, metalness: 0.8, roughness: 0.35 })),
+  darkSteel: () => once('dsteel', () => std({ map: TX.metalTex('#55595e'), metalness: 0.6, roughness: 0.5 })),
+  laminate: () => once('lam', () => std({ map: TX.laminateTex(), roughness: 0.55 })),
+  plywood: () => once('ply', () => std({ color: 0x9c7446, roughness: 0.7 })),
+  locker: () => once('locker', () => std({ map: TX.lockerTex(), metalness: 0.5, roughness: 0.55 })),
+  lockerSide: () => once('lockerSide', () => std({ map: TX.metalTex('#56626b'), metalness: 0.5, roughness: 0.55 })),
+  ceramic: () => once('cer', () => std({ color: 0xe9ebea, roughness: 0.15, metalness: 0.05 })),
+  partition: () => once('part', () => std({ color: 0x8c9aa0, roughness: 0.6 })),
+  blackTop: () => once('btop', () => std({ color: 0x1a1a1a, roughness: 0.3 })),
+  whiteCab: () => once('wcab', () => std({ color: 0xd8d6ce, roughness: 0.6 })),
+  shelfWood: () => once('shelf', () => std({ color: 0x6e4a2c, roughness: 0.75 })),
+  piano: () => once('piano', () => std({ color: 0x0b0b0b, roughness: 0.15, metalness: 0.1 })),
+  plastic: () => once('plas', () => std({ color: 0x3d5a80, roughness: 0.5 })),
+  canvas: () => once('canv', () => std({ color: 0xe8e4d8, roughness: 0.9 })),
+  monitorBlk: () => once('mon', () => std({ color: 0x151515, roughness: 0.4 })),
+  doorWood: () => once('door', () => std({ color: 0x7a5233, roughness: 0.7 })),
+  paper: () => once('paper', () => std({ map: TX.paperTex(), roughness: 0.9, side: THREE.DoubleSide })),
+  red: () => once('red', () => std({ color: 0xb01a1a, roughness: 0.4, metalness: 0.2 })),
+};
+const mesh = (geo, mat, x = 0, y = 0, z = 0, shadow = true) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = shadow; m.receiveShadow = true; return m; };
+const box = (w, h, d, mat, x, y, z) => mesh(new THREE.BoxGeometry(w, h, d), mat, x, y, z);
+const cyl = (rt, rb, h, mat, x, y, z, seg = 12) => mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat, x, y, z);
+const capsule = (r, len, mat, x, y, z) => mesh(new THREE.CapsuleGeometry(r, len, 6, 12), mat, x, y, z);
+
+// ===== 거울 속의 나 (참고 이미지: 흰 셔츠, 넥타이, 흰 줄 검정 니트 조끼, 회색 체크 바지, 흰 밑창 검정 운동화) =====
+export function makeStudent() {
+  const g = new THREE.Group();
+  const faceN = TX.faceTex(false), faceG = TX.faceTex(true);
+  const legs = [];
+  for (const s of [-1, 1]) {
+    const hip = new THREE.Group(); hip.position.set(s * 0.1, 0.92, 0); g.add(hip);
+    hip.add(capsule(0.078, 0.62, M.pants(), 0, -0.42, 0));
+    const shoe = new THREE.Group(); shoe.position.set(0, -0.86, 0.04); hip.add(shoe);
+    shoe.add(box(0.11, 0.035, 0.28, M.shoeWht(), 0, -0.02, 0)); shoe.add(box(0.1, 0.07, 0.24, M.shoeBlk(), 0, 0.03, -0.01)); shoe.add(box(0.1, 0.05, 0.05, M.shoeWht(), 0, 0.01, 0.12));
+    legs.push(hip);
+  }
+  g.add(mesh(new RoundedBoxGeometry(0.36, 0.14, 0.22, 3, 0.06), M.pants(), 0, 0.95, 0));
+  const torsoMats = [M.knit(), M.knit(), M.knit(), M.knit(), std({ map: TX.vestFrontTex(), roughness: 0.95 }), M.knit()];
+  g.add(mesh(new RoundedBoxGeometry(0.38, 0.5, 0.22, 4, 0.08), torsoMats, 0, 1.24, 0));
+  g.add(mesh(new RoundedBoxGeometry(0.4, 0.08, 0.2, 3, 0.04), M.shirt(), 0, 1.5, 0)); // 어깨(셔츠)
+  const arms = [];
+  for (const s of [-1, 1]) {
+    const sh = new THREE.Group(); sh.position.set(s * 0.235, 1.47, 0); sh.rotation.z = s * 0.06; g.add(sh);
+    sh.add(capsule(0.056, 0.42, M.shirt(), 0, -0.26, 0));
+    sh.add(cyl(0.05, 0.05, 0.04, M.shirt(), 0, -0.5, 0)); // 소매 끝 (손은 주머니 속)
+    arms.push(sh);
+  }
+  g.add(cyl(0.05, 0.055, 0.1, M.skin(), 0, 1.56, 0));
+  for (const s of [-1, 1]) { const c = box(0.08, 0.035, 0.06, M.shirt(), s * 0.05, 1.56, 0.04); c.rotation.z = s * -0.5; g.add(c); }
+  const head = new THREE.Group(); head.position.set(0, 1.7, 0); g.add(head);
+  const skull = mesh(new THREE.SphereGeometry(0.112, 24, 18), M.skin()); skull.scale.set(0.9, 1.12, 1); head.add(skull);
+  const faceMat = std({ map: faceN, transparent: true, roughness: 0.6, depthWrite: false });
+  const face = mesh(new THREE.SphereGeometry(0.1135, 24, 18, Math.PI / 2 - 0.95, 1.9, 0.62, 1.55), faceMat, 0, 0, 0, false); face.scale.copy(skull.scale); head.add(face);
+  for (const s of [-1, 1]) head.add(mesh(new THREE.SphereGeometry(0.025, 8, 8), M.skin(), s * 0.1, -0.01, 0));
+  const hair = mesh(new THREE.SphereGeometry(0.121, 28, 18, Math.PI / 2 + 1.05, Math.PI * 2 - 2.1, 0, 1.75), M.hair()); hair.scale.set(0.93, 1.13, 1.04); hair.position.set(0, 0.006, -0.004); head.add(hair); // 뒤·옆머리
+  const fringe = mesh(new THREE.SphereGeometry(0.1215, 24, 12, Math.PI / 2 - 1.1, 2.2, 0, 1.02), M.hair()); fringe.scale.copy(hair.scale); fringe.position.set(0, 0.006, -0.002); head.add(fringe); // 앞머리 (눈썹 위까지)
+  g.userData = { legs, arms, head, faceMat, faceN, faceG, faceY: 1.7 };
+  return g;
+}
+export function setGrin(st, on) { const u = st.userData; u.faceMat.map = on ? u.faceG : u.faceN; u.faceMat.needsUpdate = true; }
+
+// ===== 종이인형: 가운데가 접힌 커다란 종이 사람 =====
+export function makeDoll() {
+  const g = new THREE.Group();
+  const pts = [[0, 2.05], [-0.12, 2.02], [-0.16, 1.92], [-0.14, 1.8], [-0.07, 1.73], [-0.07, 1.66], [-0.31, 1.6], [-0.38, 1.25], [-0.4, 0.66], [-0.39, 0.5], [-0.35, 0.44], [-0.3, 0.5], [-0.29, 0.95], [-0.25, 1.34], [-0.21, 1.33], [-0.2, 1.0], [-0.21, 0.92], [-0.19, 0.1], [-0.24, 0.0], [-0.06, 0.0], [-0.05, 0.86], [0, 0.9]];
+  const tex = TX.dollTex();
+  const mat = std({ map: tex, roughness: 0.92, side: THREE.DoubleSide });
+  const halves = [];
+  for (const s of [-1, 1]) {
+    const shape = new THREE.Shape(); pts.forEach(([x, y], i) => (i ? shape.lineTo(x * s, y) : shape.moveTo(x * s, y)));
+    const geo = new THREE.ShapeGeometry(shape, 6);
+    const p = geo.attributes.position, uv = geo.attributes.uv;
+    for (let i = 0; i < p.count; i++) uv.setXY(i, 0.5 + p.getX(i) / 0.84, p.getY(i) / 2.05);
+    const piv = new THREE.Group(); g.add(piv);
+    const m = new THREE.Mesh(geo, mat); m.castShadow = true; piv.add(m);
+    halves.push(piv);
+  }
+  g.userData = { halves, faceY: 1.9 };
+  return g;
+}
+
+// ===== 복도 감독: 2m 넘는 키, 긴 팔, 작은 머리, 붉은 눈, 출석부 =====
+export function makeMonitor() {
+  const g = new THREE.Group();
+  const legs = [];
+  for (const s of [-1, 1]) {
+    const hip = new THREE.Group(); hip.position.set(s * 0.11, 1.12, 0); g.add(hip);
+    hip.add(capsule(0.07, 0.92, M.suit(), 0, -0.5, 0));
+    hip.add(box(0.1, 0.06, 0.3, M.shoeBlk(), 0, -1.08, 0.06));
+    legs.push(hip);
+  }
+  const body = new THREE.Group(); body.position.y = 1.12; body.rotation.x = 0.18; g.add(body);
+  const torsoMats = [M.suit(), M.suit(), M.suit(), M.suit(), std({ map: TX.suitFrontTex(), roughness: 0.8 }), M.suit()];
+  body.add(mesh(new RoundedBoxGeometry(0.44, 0.78, 0.24, 4, 0.08), torsoMats, 0, 0.4, 0));
+  const arms = [];
+  for (const s of [-1, 1]) {
+    const sh = new THREE.Group(); sh.position.set(s * 0.26, 0.74, 0); body.add(sh);
+    sh.add(capsule(0.058, 0.95, M.suit(), 0, -0.52, 0));
+    const hand = new THREE.Group(); hand.position.set(0, -1.06, 0); sh.add(hand);
+    hand.add(box(0.07, 0.11, 0.035, M.paleSkin(), 0, 0, 0));
+    for (let f = 0; f < 4; f++) hand.add(box(0.012, 0.13, 0.012, M.paleSkin(), -0.027 + f * 0.018, -0.11, 0));
+    if (s > 0) { const cb = mesh(new THREE.BoxGeometry(0.24, 0.32, 0.012), [M.plywood(), M.plywood(), M.plywood(), M.plywood(), std({ map: TX.clipboardTex(), roughness: 0.8 }), M.plywood()], 0.02, -0.12, 0.06); cb.rotation.set(0.2, -0.3, 0); hand.add(cb); }
+    arms.push(sh);
+  }
+  const neck = cyl(0.035, 0.04, 0.2, M.paleSkin(), 0, 0.86, 0.02); body.add(neck);
+  const head = new THREE.Group(); head.position.set(0, 1.04, 0.03); head.rotation.z = 0.35; body.add(head);
+  const skull = mesh(new THREE.SphereGeometry(0.1, 20, 16), M.paleSkin()); skull.scale.set(0.85, 1.35, 0.95); head.add(skull);
+  const cap = mesh(new THREE.SphereGeometry(0.104, 20, 10, 0, Math.PI * 2, 0, 1.2), std({ color: 0x0d0d0d, roughness: 0.7 })); cap.scale.set(0.86, 1.36, 0.97); head.add(cap);
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff1a10 });
+  for (const s of [-1, 1]) {
+    const sock = mesh(new THREE.SphereGeometry(0.026, 10, 8), std({ color: 0x050505, roughness: 1 }), s * 0.034, 0.015, 0.078); sock.scale.set(1.2, 0.8, 0.5); head.add(sock);
+    head.add(mesh(new THREE.SphereGeometry(0.008, 8, 6), eyeMat, s * 0.034, 0.015, 0.09, false));
+  }
+  const glow = new THREE.PointLight(0xff2010, 0.6, 1.2, 2); glow.position.set(0, 0.02, 0.15); head.add(glow);
+  g.userData = { legs, arms, head, body, faceY: 2.18 };
+  return g;
+}
+
+// 걷기 애니메이션 (다리 스윙)
+export function animateWalk(model, t, speed, amp = 0.5) {
+  const u = model.userData; if (!u.legs) return;
+  const a = Math.sin(t * speed) * amp;
+  u.legs[0].rotation.x = a; u.legs[1].rotation.x = -a;
+  if (u.arms) { u.arms[0].rotation.x = -a * 0.3; u.arms[1].rotation.x = a * 0.3; }
+}
+
+// ===== 가구 =====
+export function studentDesk() {
+  const g = new THREE.Group();
+  g.add(box(0.62, 0.025, 0.44, M.laminate(), 0, 0.72, 0));
+  g.add(box(0.58, 0.12, 0.38, M.darkSteel(), 0, 0.64, -0.02)); // 서랍칸
+  for (const [x, z] of [[-0.28, -0.18], [0.28, -0.18], [-0.28, 0.18], [0.28, 0.18]]) g.add(cyl(0.012, 0.012, 0.7, M.steel(), x, 0.35, z, 8));
+  g.add(box(0.56, 0.015, 0.015, M.steel(), 0, 0.12, -0.18));
+  // 의자
+  const c = new THREE.Group(); c.position.set(0, 0, 0.42); c.rotation.y = (Math.random() - 0.5) * 0.4; g.add(c);
+  c.add(box(0.4, 0.02, 0.38, M.plywood(), 0, 0.44, 0));
+  const back = box(0.38, 0.22, 0.015, M.plywood(), 0, 0.68, 0.2); back.rotation.x = -0.1; c.add(back);
+  for (const [x, z] of [[-0.18, -0.17], [0.18, -0.17], [-0.18, 0.17], [0.18, 0.17]]) c.add(cyl(0.011, 0.011, 0.44, M.steel(), x, 0.22, z, 8));
+  c.add(cyl(0.011, 0.011, 0.32, M.steel(), -0.18, 0.6, 0.19, 8)); c.add(cyl(0.011, 0.011, 0.32, M.steel(), 0.18, 0.6, 0.19, 8));
+  if (Math.random() < 0.4) { const b = box(0.21, 0.03, 0.28, std({ color: [0x7a2a2a, 0x2a4a7a, 0x3a6a3a][(Math.random() * 3) | 0], roughness: 0.7 }), (Math.random() - 0.5) * 0.3, 0.75, 0); b.rotation.y = Math.random(); g.add(b); }
+  return g;
+}
+export function teacherDesk() {
+  const g = new THREE.Group();
+  g.add(box(1.8, 0.04, 0.75, M.laminate(), 0, 0.78, 0));
+  g.add(box(1.76, 0.74, 0.04, M.plywood(), 0, 0.38, 0.33));
+  g.add(box(0.5, 0.74, 0.7, M.plywood(), -0.62, 0.38, 0)); g.add(box(0.5, 0.74, 0.7, M.plywood(), 0.62, 0.38, 0));
+  g.add(box(0.3, 0.04, 0.22, std({ color: 0x334, roughness: 0.6 }), 0.3, 0.82, -0.05)); // 출석부
+  return g;
+}
+export function locker() {
+  const g = new THREE.Group();
+  for (const s of [-1, 1]) g.add(mesh(new THREE.BoxGeometry(0.56, 1.85, 0.5), [M.lockerSide(), M.lockerSide(), M.lockerSide(), M.lockerSide(), M.locker(), M.lockerSide()], s * 0.29, 0.925, 0));
+  return g;
+}
+export function easel() {
+  const g = new THREE.Group();
+  for (const s of [-1, 1]) { const l = cyl(0.015, 0.015, 1.7, M.plywood(), s * 0.25, 0.83, 0); l.rotation.z = s * 0.12; g.add(l); }
+  const bl = cyl(0.015, 0.015, 1.7, M.plywood(), 0, 0.8, -0.3); bl.rotation.x = -0.25; g.add(bl);
+  const cv = box(0.6, 0.75, 0.03, M.canvas(), 0, 1.15, 0.04); cv.rotation.x = -0.08; g.add(cv);
+  g.add(box(0.6, 0.03, 0.08, M.plywood(), 0, 0.76, 0.05));
+  return g;
+}
+export function officeDesk() {
+  const g = new THREE.Group();
+  g.add(box(1.1, 0.04, 0.7, std({ color: 0x8b8c88, roughness: 0.5 }), 0, 0.74, 0));
+  g.add(box(0.4, 0.7, 0.65, std({ color: 0x6f716e, roughness: 0.5 }), 0.33, 0.36, 0));
+  g.add(box(0.5, 0.32, 0.03, M.monitorBlk(), -0.1, 1.0, -0.2)); g.add(box(0.06, 0.12, 0.06, M.monitorBlk(), -0.1, 0.81, -0.2));
+  g.add(box(0.42, 0.02, 0.14, M.monitorBlk(), -0.1, 0.77, 0.05));
+  for (let i = 0; i < 4; i++) { const p = box(0.21, 0.004, 0.29, std({ color: 0xeeeae0, roughness: 0.9 }), -0.3 + Math.random() * 0.2, 0.765 + i * 0.004, 0.15); p.rotation.y = Math.random() - 0.5; g.add(p); }
+  const ch = new THREE.Group(); ch.position.set(-0.1, 0, 0.55); g.add(ch);
+  ch.add(cyl(0.22, 0.22, 0.07, std({ color: 0x222, roughness: 0.8 }), 0, 0.48, 0, 16)); ch.add(cyl(0.02, 0.02, 0.4, M.steel(), 0, 0.25, 0));
+  ch.add(box(0.42, 0.5, 0.06, std({ color: 0x222, roughness: 0.8 }), 0, 0.82, 0.22));
+  return g;
+}
+export function labBench() {
+  const g = new THREE.Group();
+  g.add(box(1.2, 0.04, 0.9, M.blackTop(), 0, 0.88, 0));
+  g.add(box(1.14, 0.84, 0.84, M.whiteCab(), 0, 0.43, 0));
+  for (let i = -1; i <= 1; i++) { g.add(box(0.005, 0.7, 0.8, std({ color: 0x999, roughness: 0.6 }), i * 0.38, 0.43, 0.425)); }
+  if (Math.random() < 0.5) { g.add(cyl(0.05, 0.07, 0.15, std({ color: 0xcfe8ef, transparent: true, opacity: 0.5, roughness: 0.05 }), 0.2, 0.98, 0.1)); g.add(cyl(0.012, 0.012, 0.3, M.steel(), -0.4, 1.05, -0.35)); }
+  return g;
+}
+export function shelf() {
+  const g = new THREE.Group();
+  g.add(box(1.2, 2.1, 0.03, M.shelfWood(), 0, 1.05, 0));
+  for (const s of [-1, 1]) g.add(box(0.03, 2.1, 0.62, M.shelfWood(), s * 0.585, 1.05, 0));
+  for (let i = 0; i < 5; i++) g.add(box(1.17, 0.025, 0.62, M.shelfWood(), 0, 0.08 + i * 0.48, 0));
+  return g;
+}
+export function piano() {
+  const g = new THREE.Group();
+  g.add(box(1.5, 1.25, 0.55, M.piano(), 0, 0.63, -0.1));
+  g.add(box(1.5, 0.06, 0.25, M.piano(), 0, 0.74, 0.26));
+  g.add(box(1.36, 0.02, 0.15, std({ color: 0xf2f0e8, roughness: 0.3 }), 0, 0.775, 0.3));
+  for (let i = 0; i < 26; i++) g.add(box(0.025, 0.02, 0.08, M.piano(), -0.64 + i * 0.052, 0.79, 0.27));
+  g.add(box(0.8, 0.45, 0.35, M.piano(), 0, 0.23, 0.75)); // 의자
+  return g;
+}
+export function plasticChair() {
+  const g = new THREE.Group(); g.rotation.y = (Math.random() - 0.5) * 1.2;
+  g.add(box(0.42, 0.03, 0.4, M.plastic(), 0, 0.45, 0)); const b = box(0.42, 0.35, 0.03, M.plastic(), 0, 0.68, -0.2); b.rotation.x = 0.1; g.add(b);
+  for (const [x, z] of [[-0.19, -0.17], [0.19, -0.17], [-0.19, 0.17], [0.19, 0.17]]) g.add(cyl(0.012, 0.012, 0.45, M.steel(), x, 0.22, z, 8));
+  if (Math.random() < 0.3) { g.rotation.z = Math.PI / 2; g.position.y = 0.2; }
+  return g;
+}
+export function sinkCounter(width) {
+  const g = new THREE.Group();
+  g.add(box(width, 0.06, 0.5, std({ color: 0x5b5e60, roughness: 0.3 }), 0, 0.82, 0.25));
+  g.add(box(width, 0.78, 0.04, std({ color: 0x4a4d50, roughness: 0.5 }), 0, 0.4, 0.48));
+  for (let i = 0; i < 3; i++) {
+    const x = -width / 2 + width * (i + 0.5) / 3;
+    const bowl = mesh(new THREE.CylinderGeometry(0.2, 0.14, 0.12, 20, 1, true), M.ceramic(), x, 0.8, 0.25); bowl.material.side = THREE.DoubleSide; g.add(bowl);
+    g.add(cyl(0.015, 0.015, 0.18, M.steel(), x, 0.94, 0.05)); const sp = cyl(0.012, 0.012, 0.14, M.steel(), x, 1.02, 0.11); sp.rotation.x = Math.PI / 2; g.add(sp);
+  }
+  return g;
+}
+export function stall() {
+  const g = new THREE.Group();
+  g.add(box(0.03, 2.0, 1.4, M.partition(), -0.6, 1.1, 0));
+  const door = box(0.75, 1.8, 0.03, M.partition(), -0.15, 1.05, 0.7); door.rotation.y = -0.6; door.position.x = 0.05; g.add(door);
+  g.add(box(0.38, 0.4, 0.5, M.ceramic(), 0.2, 0.2, -0.35)); g.add(box(0.4, 0.05, 0.55, M.ceramic(), 0.2, 0.42, -0.33)); g.add(box(0.42, 0.35, 0.18, M.ceramic(), 0.2, 0.62, -0.62));
+  return g;
+}
+export function extinguisher() {
+  const g = new THREE.Group();
+  g.add(cyl(0.08, 0.08, 0.48, M.red(), 0, 0.26, 0, 16)); g.add(cyl(0.03, 0.05, 0.08, M.monitorBlk(), 0, 0.54, 0)); g.add(box(0.12, 0.03, 0.03, M.monitorBlk(), 0.04, 0.6, 0));
+  return g;
+}
+export function flashlightModel() {
+  const g = new THREE.Group();
+  const body = cyl(0.018, 0.016, 0.16, std({ color: 0x222, roughness: 0.4, metalness: 0.5 }), 0, 0, 0); body.rotation.x = Math.PI / 2; g.add(body);
+  const head = cyl(0.026, 0.019, 0.04, std({ color: 0x333, roughness: 0.3, metalness: 0.7 }), 0, 0, -0.09); head.rotation.x = Math.PI / 2; g.add(head);
+  const lens = mesh(new THREE.CircleGeometry(0.023, 16), new THREE.MeshBasicMaterial({ color: 0xfff6dd }), 0, 0, -0.111, false); lens.rotation.y = Math.PI; g.add(lens);
+  const hand = mesh(new RoundedBoxGeometry(0.05, 0.045, 0.08, 3, 0.018), std({ color: 0x8a6a58, roughness: 0.7 }), 0.004, -0.014, 0.04, false); g.add(hand);
+  g.traverse((o) => { o.castShadow = false; });
+  return g;
+}
+export function keyModel() {
+  const g = new THREE.Group(); const brass = std({ color: 0xc9a227, metalness: 0.9, roughness: 0.3 });
+  const ring = mesh(new THREE.TorusGeometry(0.03, 0.007, 8, 16), brass); ring.rotation.x = Math.PI / 2; g.add(ring);
+  g.add(box(0.09, 0.006, 0.012, brass, 0.07, 0, 0)); g.add(box(0.012, 0.006, 0.025, brass, 0.1, 0, 0.012));
+  const tag = box(0.05, 0.004, 0.08, std({ color: 0xa01818, roughness: 0.6 }), -0.06, 0, 0.03); tag.rotation.y = 0.4; g.add(tag);
+  return g;
+}
