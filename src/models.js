@@ -97,6 +97,15 @@ export function makeDoll() {
   return g;
 }
 
+// ===== 데칼코마니: 바닥을 기어 다니는 대칭 먹물 얼룩 =====
+export function makeBlot() {
+  const g = new THREE.Group();
+  const mat = new THREE.MeshStandardMaterial({ map: TX.inkBlotTex(), transparent: true, roughness: 0.2, metalness: 0.1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), mat); m.rotation.x = -Math.PI / 2; m.position.y = 0.012; m.receiveShadow = true; g.add(m);
+  g.userData = { decal: m, faceY: 0 };
+  return g;
+}
+
 // ===== 복도 감독: 2m 넘는 키, 긴 팔, 작은 머리, 붉은 눈, 출석부 =====
 export function makeMonitor() {
   const g = new THREE.Group();

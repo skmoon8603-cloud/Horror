@@ -9,15 +9,15 @@ const GAME_TITLE = '뒤틀린 학교';
 const SERVER = location.hostname.endsWith('onrender.com') ? '' : 'https://random-football-cflg.onrender.com';
 const RULES = {
   bell: { text: '수업 종이 울리면 반드시 교실 안에 있을 것.', why: '수업 시간에 교실 밖에 있었다. 복도 감독이 출석부에서 내 이름을 지웠다.' },
-  run: { text: '종이인형은 눈이 없다. 대신 소리를 듣는다. 복도에서 뛰지 말 것.', why: '종이인형에게 들켰다. 몸이 반으로 접혔다.' },
+  run: { text: '데칼코마니는 눈이 없다. 소리가 난 곳을 통째로 접어 버린다. 복도에서 뛰지 말 것.', why: '데칼코마니가 복도를 접었다. 나는 벽에 색연필로 그려진 그림이 되었다.' },
   mirror: { text: '화장실 거울 속의 나와 오래 눈을 마주치지 말 것. 그 애가 웃으면 무조건 도망쳐.', why: '거울 속의 내가 웃었다. 그리고 거울 밖으로 나와 내 자리를 가져갔다.' },
 };
 const NOTES = {
   n1: { t: '칠판', b: '"종이 울리면 반드시 자리에 앉을 것."' },
   n2: { t: '화장실 벽 낙서', b: '거울 속 애가 자꾸 나보다 늦게 움직여.\n계속 보고 있으면 걔가 멈춰. 그리고 웃어.\n웃으면… 나와. 무조건 뛰어.' },
-  n3: { t: '미술실 쪽지', b: '미술실에 있던 종이인형이 없어졌다.\n걔는 눈이 없어. 대신 귀가 엄청 좋아.\n뛰면 바로 와. 살금살금 걸으면 몰라.' },
+  n3: { t: '미술실 쪽지', b: '복도 벽에 색연필 그림이 자꾸 늘어나.\n전부 사라진 애들이야.\n바닥에 번진 먹물 같은 게 데칼코마니야. 걔는 눈이 없어.\n소리 나는 곳으로 가서 복도를 통째로 접어 버려.\n벽이 쭈글쭈글해지면 무조건 거기서 벗어나.' },
   n4: { t: '교무실 분실 신고', b: '[분실] 옥상 계단 열쇠 (빨간 꼬리표)\n마지막으로 본 곳: 음악실 / 과학실 / 도서실 / 교무실\n찾으면 계단 철문을 열 수 있음.' },
-  n5: { t: '과학실 쪽지', b: '사물함에 숨으면 종이인형한테 안 들켜.\n근데 안은 너무 좁아서 8초 이상은 못 버텨.\n그리고 감독한테는 소용없어. 걔는 사물함도 열어.' },
+  n5: { t: '과학실 쪽지', b: '사물함에 숨으면 데칼코마니한테 안 들켜.\n근데 안은 너무 좁아서 8초 이상은 못 버텨.\n그리고 감독한테는 소용없어. 걔는 사물함도 열어.' },
   n6: { t: '도서실 일지', b: '이 학교는 종이 칠 때마다 교시를 하나씩 늘린다.\n교시가 늘어날수록 복도의 무언가도 늘어난다.\n출구는 위에 있다. 옥상으로.' },
 };
 
@@ -81,14 +81,14 @@ renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x000000);
-scene.fog = new THREE.FogExp2(0x030304, 0.075);
+scene.fog = new THREE.FogExp2(0x0a0b0d, 0.022);
 const camera = new THREE.PerspectiveCamera(72, 1, 0.04, 70); scene.add(camera);
 function resize() { renderer.setSize(innerWidth, innerHeight, false); camera.aspect = innerWidth / innerHeight; camera.fov = innerWidth < innerHeight ? 80 : 70; camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
-scene.add(new THREE.HemisphereLight(0x2a3040, 0x080706, 0.35));
+scene.add(new THREE.HemisphereLight(0xb8c0cc, 0x3a342c, 1.5)); scene.add(new THREE.AmbientLight(0x9aa0a8, 0.55)); // 화면 전체가 보이도록 밝게
 
 // 손전등 (카메라에 붙어 있음)
-const flash = new THREE.SpotLight(0xfff0d6, 38, 22, 0.46, 0.5, 1.6);
+const flash = new THREE.SpotLight(0xfff0d6, 30, 22, 0.6, 0.6, 1.6);
 flash.position.set(0.1, -0.13, -0.5); flash.castShadow = true;
 flash.shadow.mapSize.set(1024, 1024); flash.shadow.camera.near = 0.15; flash.shadow.camera.far = 22; flash.shadow.bias = -0.0008;
 camera.add(flash); flash.target.position.set(0, -0.8, -6); camera.add(flash.target);
@@ -240,6 +240,25 @@ const crackMesh = new THREE.Mesh(new THREE.PlaneGeometry(6 * S, 1.25), new THREE
 { const fm = MD.M.steel(); for (const [w, h, x, y] of [[6 * S + 0.06, 0.03, 19 * S, 2.25], [6 * S + 0.06, 0.03, 19 * S, 1.0], [0.03, 1.25, 16 * S, 1.625], [0.03, 1.25, 22 * S, 1.625]]) { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.03), fm); b.position.set(x, y, S + 0.01); scene.add(b); } }
 const dop = MD.makeStudent(); scene.add(dop); dop.visible = false; // 거울 속의 나
 
+// 벽의 색연필 그림 (데칼코마니에게 접힌 사람들). 내가 접혀 죽으면 내 그림도 늘어난다
+const drawG = new THREE.Group(); scene.add(drawG);
+const DRAW_SPOTS = [[38, 11, 0], [48, 11, 0], [55, 11, 0], [36.6, 15, 1], [43, 15, 1], [50, 15, 1], [55.5, 15, 1], [37, 16, 0], [56.98, 20, 2], [36.02, 19, 3]];
+const ME_SPOTS = [[33, 15, 1], [27.5, 11, 0], [23.5, 15, 1], [15, 15, 1]];
+const drawTexCache = {};
+function drawMesh(tex, x, y, side) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 1.5), std({ map: tex, transparent: true, roughness: 0.9, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1 }));
+  const z = y * S; m.position.set(x * S, 0.42 + 0.75 + (Math.random() - 0.5) * 0.15, side === 0 ? z + 0.012 : side === 1 ? z - 0.012 : z);
+  if (side === 1) m.rotation.y = Math.PI; if (side === 2) { m.rotation.y = -Math.PI / 2; m.position.x = x * S - 0.012; } if (side === 3) { m.rotation.y = Math.PI / 2; m.position.x = x * S + 0.012; }
+  m.rotation.z = (Math.random() - 0.5) * 0.12; drawG.add(m);
+}
+function buildDrawings() {
+  drawG.clear();
+  DRAW_SPOTS.forEach(([x, y, sd], i) => drawMesh(drawTexCache[i] || (drawTexCache[i] = TX.pencilPersonTex(i + 1, false)), x, y, sd));
+  for (let i = 0; i < Math.min(ME_SPOTS.length, save.folds || 0); i++) { const [x, y, sd] = ME_SPOTS[i]; drawMesh(drawTexCache['me' + i] || (drawTexCache['me' + i] = TX.pencilPersonTex(100 + i, true)), x, y, sd); }
+}
+let meURL = '';
+function meDrawURL() { if (!meURL) { const t = TX.pencilPersonTex(7, true); meURL = t.image.toDataURL(); } return meURL; }
+
 // 쪽지·열쇠
 const noteMeshes = {};
 for (const id in NOTE_SPOTS) { const [x, y] = NOTE_SPOTS[id]; const m = new THREE.Mesh(new THREE.PlaneGeometry(0.21, 0.28), std({ map: TX.paperTex(), roughness: 0.9, emissive: 0x2a2818, side: THREE.DoubleSide })); m.rotation.x = -Math.PI / 2; m.rotation.z = Math.random() * 3; m.position.set(x * S, 0.006, y * S); m.receiveShadow = true; scene.add(m); noteMeshes[id] = m; }
@@ -304,13 +323,23 @@ const footstep = (loud) => noise(0.07, loud, 350 + Math.random() * 200, 0, 2);
 function heartbeat() { if (!AC) return; const t = AC.currentTime; tone(55, t, 0.18, 0.35); tone(50, t + 0.22, 0.2, 0.28); }
 function scream() { if (!AC) return; const t = AC.currentTime; noise(1.3, 1.3, 1800, 0, 0.7); const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(950, t); o.frequency.exponentialRampToValueAtTime(130, t + 1.1); g.gain.setValueAtTime(0.42, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.2); o.connect(g); g.connect(master); o.start(t); o.stop(t + 1.25); }
 const glassBreak = () => { noise(0.9, 1.0, 5000, 0, 0.5); noise(0.4, 0.6, 2500, 0, 1); };
-function monitorSteps(m) {
+// 내 발소리: 보내준 「발걸음」 소리 (걷기 1, 달리기 2, 살금 0.5, 멈춤 0)
+let pMode = -1;
+function playerSteps(mode) {
   if (!AC || !stepBuf) return;
-  if (!m) { if (stepSrc) { try { stepSrc.stop(); } catch (e) {} stepSrc = null; } return; }
-  if (!stepSrc) { stepSrc = AC.createBufferSource(); stepSrc.buffer = stepBuf; stepSrc.loop = true; stepGain = AC.createGain(); stepGain.gain.value = 0; stepSrc.connect(stepGain); let last = stepGain; if (AC.createStereoPanner) { stepPan = AC.createStereoPanner(); stepGain.connect(stepPan); last = stepPan; } last.connect(master); stepSrc.start(); }
-  const d = Math.hypot(m.x - P.x, m.y - P.y), v = Math.max(0.05, Math.min(1.6, 2.4 / (1 + d * 0.35)));
-  stepGain.gain.setTargetAtTime(v, AC.currentTime, 0.1);
-  if (stepPan) stepPan.pan.setTargetAtTime(panOf(m.x, m.y), AC.currentTime, 0.1);
+  if (!stepSrc) { stepSrc = AC.createBufferSource(); stepSrc.buffer = stepBuf; stepSrc.loop = true; stepGain = AC.createGain(); stepGain.gain.value = 0; stepSrc.connect(stepGain); stepGain.connect(master); stepSrc.start(); }
+  if (mode === pMode) return; pMode = mode;
+  const vol = mode === 2 ? 1.0 : mode === 1 ? 0.6 : mode === 0.5 ? 0.12 : 0, rate = mode === 2 ? 1.75 : mode === 1 ? 1.15 : 0.7;
+  stepGain.gain.setTargetAtTime(vol, AC.currentTime, mode ? 0.04 : 0.08);
+  if (mode) stepSrc.playbackRate.setTargetAtTime(rate, AC.currentTime, 0.05);
+}
+// 복도 감독 발소리: 또각또각 구두 소리 (거리·방향에 따라)
+let heelT = 0;
+function monitorSteps(m) {
+  if (!m) { heelT = 0; return; }
+  heelT -= 1 / 60; if (heelT > 0) return; heelT = 0.55;
+  const d = Math.hypot(m.x - P.x, m.y - P.y), v = Math.max(0.03, Math.min(1.2, 2.2 / (1 + d * 0.3))), pan = panOf(m.x, m.y);
+  noise(0.05, v, 3200, pan, 3); noise(0.09, v * 0.7, 260, pan, 2);
 }
 function panOf(x, y) { const dx = x - P.x, dy = y - P.y; const rx = Math.cos(yaw), ry = -Math.sin(yaw); const d = Math.hypot(dx, dy) || 1; return Math.max(-1, Math.min(1, (dx * rx + dy * ry) / d)); }
 
@@ -319,7 +348,7 @@ let P, mons, phase, phaseT, period, runTime, hidden, hideT, alive, started = fal
 let mir = { st: 'normal', t: 0, hist: [], pose: null, cd: 0, chaser: null };
 const breakLen = (p) => Math.max(35, 62 - p * 5), CLASS_LEN = 22;
 function addMon(kind, x, y) {
-  const model = kind === 'doll' ? MD.makeDoll() : kind === 'monitor' ? MD.makeMonitor() : MD.makeStudent();
+  const model = kind === 'doll' ? MD.makeBlot() : kind === 'monitor' ? MD.makeMonitor() : MD.makeStudent();
   if (kind === 'mirror') MD.setGrin(model, true);
   scene.add(model);
   const m = { kind, x, y, path: [], pathT: 0, state: 'wander', alertT: 0, target: null, rustleT: 0, model, life: 13, fx: 0, fy: 1 };
@@ -335,7 +364,8 @@ function reset() {
   keyPos = KEY_SPOTS[(Math.random() * KEY_SPOTS.length) | 0]; keyObj.visible = true; keyObj.position.set(keyPos[0] * S, 0.008, keyPos[1] * S);
   for (const id in noteMeshes) noteMeshes[id].visible = !save.notes.includes(id);
   mir = { st: 'normal', t: 0, hist: [], pose: null, cd: 0, chaser: null }; MD.setGrin(dop, false); crackMesh.visible = false; glass.visible = true;
-  updKey(); monitorSteps(null);
+  if (fold) { for (const p of foldPanels) p.visible = false; crease.visible = false; fold = null; }
+  buildDrawings(); updKey(); monitorSteps(null); playerSteps(0);
 }
 function updKey() { $('keyChip').textContent = hasKey ? '🔑 옥상 열쇠' : '🔑 열쇠 없음'; $('keyChip').classList.toggle('got', hasKey); }
 
@@ -378,7 +408,7 @@ function update(dt) {
       phase = 'break'; period++; phaseT = breakLen(period); bellSound(1.06);
       for (const m of mons.filter((m) => m.kind === 'monitor')) removeMon(m);
       monitorSteps(null);
-      if (period === 3 && mons.filter((m) => m.kind === 'doll').length < 2) { addMon('doll', 20.5, 24.5); toast('📄 어딘가에서 종이 구겨지는 소리가 하나 더 들린다…', 3000); }
+      if (period === 3 && mons.filter((m) => m.kind === 'doll').length < 2) { addMon('doll', 20.5, 24.5); toast('🖍️ 복도 어딘가에서 벽이 접히는 소리가 하나 더 들린다…', 3000); }
       else toast(period + '교시 쉬는 시간');
     }
   }
@@ -396,8 +426,10 @@ function update(dt) {
     moveP((fx * -my + rx * mx) * k, (fz * -my + rz * mx) * k);
     noiseR = running ? 7.5 : sneak ? 0.6 : 3;
     const prev = stepPh; stepPh += dt * (running ? 11 : sneak ? 4.5 : 7.5);
-    if (Math.floor(prev / Math.PI) !== Math.floor(stepPh / Math.PI)) footstep(running ? 0.55 : sneak ? 0.04 : 0.2);
+    if (!stepBuf && Math.floor(prev / Math.PI) !== Math.floor(stepPh / Math.PI)) footstep(running ? 0.55 : sneak ? 0.04 : 0.2);
+    playerSteps(running ? 2 : sneak ? 0.5 : 1);
   }
+  if (hidden || ml <= 0.15) playerSteps(0);
   P.noise = noiseR;
 
   // 쪽지·열쇠·계단
@@ -417,6 +449,8 @@ function update(dt) {
 
   updateMirror(dt);
   if (!alive) return;
+  updateFold(dt);
+  if (!alive) return;
 
   // 괴물
   let nearest = 99, monitor = null;
@@ -424,16 +458,17 @@ function update(dt) {
     m.pathT -= dt;
     const d = Math.hypot(m.x - P.x, m.y - P.y);
     if (m.kind === 'doll') {
-      if (!hidden && P.noise > 0 && d < P.noise && rr(P.x | 0, P.y | 0) !== 1) { if (m.state !== 'hunt') noise(0.4, 0.7, 3200, panOf(m.x, m.y), 0.8); m.state = 'hunt'; m.alertT = 2.5; m.target = [P.x | 0, P.y | 0]; m.pathT = Math.min(m.pathT, 0); }
+      if (fold && fold.m === m) { nearest = Math.min(nearest, d); continue; } // 접는 중에는 멈춰 있다
+      if (!hidden && P.noise > 0 && d < P.noise && rr(P.x | 0, P.y | 0) !== 1) { if (m.state !== 'hunt') noise(0.5, 0.6, 700, panOf(m.x, m.y), 1.5); m.state = 'hunt'; m.alertT = 2.5; m.target = [P.x | 0, P.y | 0]; m.pathT = Math.min(m.pathT, 0); }
       if (m.pathT <= 0 || !m.path || !m.path.length) {
         m.pathT = m.state === 'hunt' ? 0.3 : 3;
         if (m.state === 'wander' && (!m.path || !m.path.length)) m.target = randomSpot();
         if (m.target) m.path = bfs(m.x, m.y, m.target[0], m.target[1]) || [];
       }
       const done = follow(m, m.state === 'hunt' ? 3.3 : 1.0, dt);
-      if (m.state === 'hunt') { m.alertT -= dt; if (done && m.alertT <= 0) { m.state = 'wander'; m.path = []; } }
-      m.rustleT -= dt; if (m.rustleT <= 0) { m.rustleT = 1.4 + Math.random() * 2; if (d < 14) noise(0.3, 0.35 * (1 - d / 14), 3000 + Math.random() * 2000, panOf(m.x, m.y), 0.8); }
-      if (!hidden && d < 0.6) return die('run', m);
+      if (m.state === 'hunt') { m.alertT -= dt; if (done && !fold) startFold(m); else if (done && m.alertT <= 0) { m.state = 'wander'; m.path = []; } }
+      m.rustleT -= dt; if (m.rustleT <= 0) { m.rustleT = 1.6 + Math.random() * 2; if (d < 14) noise(0.35, 0.3 * (1 - d / 14), 250 + Math.random() * 150, panOf(m.x, m.y), 3); } // 먹물이 끈적하게 번지는 소리
+      if (!hidden && d < 0.7 && !fold) startFold(m, true);
     } else if (m.kind === 'monitor') {
       monitor = m;
       if (m.pathT <= 0) { m.pathT = 0.25; const tx = hidden ? hidden[0] : P.x, ty = hidden ? hidden[1] + (hidden[1] === 11 ? 1 : -1) : P.y; m.path = bfs(m.x, m.y, tx, ty) || []; }
@@ -452,6 +487,38 @@ function update(dt) {
   beatT -= dt;
   if (nearest < 8 && beatT <= 0) { heartbeat(); beatT = 0.35 + nearest / 8 * 0.9; }
 }
+// ===== 데칼코마니가 복도를 접는다 =====
+let fold = null;
+const foldMat = std({ map: TX.foldTex(), roughness: 0.8 });
+const foldPanels = [0, 1].map(() => { const p = new THREE.Mesh(new THREE.BoxGeometry(3.8, WALL_H, 0.12), foldMat); p.visible = false; p.castShadow = true; scene.add(p); return p; });
+const creaseMat = new THREE.MeshBasicMaterial({ color: 0x050303, transparent: true, opacity: 0 });
+const crease = new THREE.Group(); crease.visible = false; scene.add(crease); // 바닥·벽·천장에 생기는 접힌 자국
+for (const [w, h, d, y, z] of [[0.05, 0.012, 4.8, 0.006, 0], [0.05, WALL_H, 0.012, WALL_H / 2, -2.39], [0.05, WALL_H, 0.012, WALL_H / 2, 2.39], [0.05, 0.012, 4.8, WALL_H - 0.006, 0]]) { const c = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), creaseMat); c.position.set(0, y - WALL_H / 2, z); crease.add(c); }
+function startFold(m, instant) {
+  fold = { m, x: m.x, y: m.y, t: instant ? 0.55 : 0, killed: false };
+  const r = rr(m.x | 0, m.y | 0), cz = r === 0 ? 13.0 : m.y; fold.cz = cz; // 복도에서는 복도 가운데를 기준으로 접는다
+  for (const p of foldPanels) { p.visible = true; p.position.set(m.x * S, WALL_H / 2, cz * S); }
+  crease.visible = true; crease.position.set(m.x * S, WALL_H / 2, cz * S);
+  noise(0.9, 0.7, 180, panOf(m.x, m.y), 2); noise(0.6, 0.4, 2600, panOf(m.x, m.y), 1);
+}
+function updateFold(dt) {
+  if (!fold) return;
+  fold.t += dt; const t = fold.t, near = Math.hypot(fold.x - P.x, fold.y - P.y);
+  creaseMat.opacity = Math.min(0.95, t * 1.6); crease.scale.x = 1 + Math.sin(t * 40) * 0.5 * (t < 0.7 ? 1 : 0);
+  const open = 2.2, k = t < 0.7 ? 0 : t < 0.92 ? (t - 0.7) / 0.22 : t < 1.5 ? 1 : t < 2.1 ? 1 - (t - 1.5) / 0.6 : 0;
+  const e = k * k * (3 - 2 * k), off = open - (open - 0.07) * e;
+  foldPanels[0].position.z = fold.cz * S - off; foldPanels[1].position.z = fold.cz * S + off;
+  const wob = t < 0.7 ? Math.sin(t * 50) * 0.04 : 0; foldPanels[0].rotation.y = wob; foldPanels[1].rotation.y = -wob;
+  for (const p of foldPanels) { p.scale.x = 0.3 + 0.7 * Math.min(1, t * 2); p.material.opacity = 1; }
+  if (t < 0.7 && near < 5) shakeT = 0.1; // 벽이 쭈글쭈글 흔들린다
+  if (t > 0.6 && t - dt <= 0.6) noise(0.5, 0.5, 900, panOf(fold.x, fold.y), 0.6);
+  if (!fold.killed && t >= 0.92) {
+    fold.killed = true; noise(0.4, 1.2, 120, panOf(fold.x, fold.y), 1); shakeT = near < 8 ? 0.35 : 0;
+    if (!hidden && Math.abs(P.x - fold.x) < 1.6 && Math.abs(P.y - fold.cz) < 2.3) { die('run', null); return; }
+  }
+  if (t > 2.2) { for (const p of foldPanels) p.visible = false; crease.visible = false; const m = fold.m; m.state = 'wander'; m.path = []; m.alertT = 0; fold = null; }
+}
+let shakeT = 0;
 function moveP(dx, dy) {
   const r = 0.28;
   const hit = (x, y) => solid(Math.floor(x - r), Math.floor(y - r)) || solid(Math.floor(x + r), Math.floor(y - r)) || solid(Math.floor(x - r), Math.floor(y + r)) || solid(Math.floor(x + r), Math.floor(y + r)) || (rr(x | 0, y | 0) === 2 && y < 1.75 && x > 15.9 && x < 22.1);
@@ -499,7 +566,8 @@ function updateMirror(dt) {
 function die(rule, m) {
   alive = false; killer = { rule, m }; deadT = 0; $('toast').style.opacity = 0; scream(); if (navigator.vibrate) navigator.vibrate([200, 80, 300]);
   if (hidden) leaveHide(); monitorSteps(null);
-  const isNew = !save.rules.includes(rule); if (isNew) save.rules.push(rule); save.deaths++; persist();
+  const isNew = !save.rules.includes(rule); if (isNew) save.rules.push(rule); save.deaths++; if (rule === 'run') save.folds = (save.folds || 0) + 1; persist(); playerSteps(0);
+  if (rule === 'run') setTimeout(() => { $('drawShow').style.backgroundImage = 'url(' + meDrawURL() + ')'; $('drawShow').classList.add('show'); }, 450);
   setTimeout(() => { $('deadWhy').textContent = RULES[rule].why; $('deadRule').textContent = '📓 ' + RULES[rule].text; $('deadNew').textContent = isNew ? '새 규칙이 수첩에 적혔다.' : '이미 알고 있던 규칙이다…'; modal('dead', true); }, 1500);
 }
 function win() {
@@ -520,18 +588,19 @@ function frame() {
     const targetEye = hidden ? 1.55 : sneak ? 1.12 : 1.6; eye += (targetEye - eye) * Math.min(1, dt * 8);
     const moving = Math.hypot(joy.x, joy.y) > 0.15 || keys.w || keys.a || keys.s || keys.d || keys.arrowup || keys.arrowdown;
     const bob = moving && !hidden ? Math.sin(stepPh * 2) * 0.025 : 0;
-    camera.position.set(P.x * S, eye + bob, P.y * S);
+    if (shakeT > 0) shakeT -= dt;
+    const sh = shakeT > 0 ? (Math.random() - 0.5) * 0.05 : 0;
+    camera.position.set(P.x * S + sh, eye + bob + sh, P.y * S);
     camera.rotation.set(0, 0, 0); camera.rotateY(yaw); camera.rotateX(pitch);
     flashModel.position.y = -0.2 + bob * 0.6; flashModel.position.x = 0.12 + (moving ? Math.cos(stepPh) * 0.008 : 0);
-    flash.intensity = hidden ? 0 : 38 * (Math.random() < 0.004 ? 0.2 : 1);
+    flash.intensity = hidden ? 0 : 30 * (Math.random() < 0.004 ? 0.2 : 1);
     flashModel.visible = !hidden;
     // 괴물 모델 위치·애니메이션
     for (const m of mons) {
       const md = m.model; md.position.set(m.x * S, 0, m.y * S);
       const tr = Math.atan2(m.fx, m.fy); md.rotation.y += (((tr - md.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * Math.min(1, dt * 6);
       if (m.kind === 'doll') {
-        const h = md.userData.halves, f = 0.55 + Math.sin(tAll * (m.state === 'hunt' ? 14 : 3)) * (m.state === 'hunt' ? 0.35 : 0.15);
-        h[0].rotation.y = f; h[1].rotation.y = -f; md.position.y = 0.04 + Math.abs(Math.sin(tAll * 4)) * 0.05; md.rotation.z = Math.sin(tAll * 2.3) * 0.05;
+        md.rotation.y = tAll * 0.15; const pul = 1 + Math.sin(tAll * (m.state === 'hunt' ? 9 : 2)) * 0.06; md.userData.decal.scale.set(pul * (m.state === 'hunt' ? 1.25 : 1), pul, 1);
       } else if (m.kind === 'monitor') { MD.animateWalk(md, tAll, 5, 0.45); md.userData.head.rotation.z = 0.35 + Math.sin(tAll * 7) * (Math.random() < 0.05 ? 0.3 : 0.02); }
       else { MD.animateWalk(md, tAll, 13, 0.8); md.userData.head.lookAt(camera.position); }
     }
@@ -549,13 +618,12 @@ function frame() {
       const fy = md.userData.faceY || 1.7, dist = 0.42 - deadT * 0.08;
       md.position.set(camera.position.x + f.x * dist, camera.position.y - fy + f.y * dist + (Math.random() - 0.5) * 0.02, camera.position.z + f.z * dist);
       md.rotation.set(0, yaw, 0); if (md.userData.head) md.userData.head.rotation.set(0, 0, 0.3);
-      if (killer.m.kind === 'doll') { md.userData.halves[0].rotation.y = 0.2; md.userData.halves[1].rotation.y = -0.2; }
       if (md.userData.head) { // 얼굴이 정확히 눈앞에 오도록 머리 위치 기준으로 맞춘다
         md.updateMatrixWorld(true); const hp = new THREE.Vector3(); md.userData.head.getWorldPosition(hp);
         const want = camera.position.clone().addScaledVector(f, killer.m.kind === 'monitor' ? 0.4 - deadT * 0.06 : 0.5 - deadT * 0.08);
         md.position.add(want.sub(hp));
       }
-      flash.intensity = deadT < 0.1 ? 120 : 38;
+      flash.intensity = deadT < 0.1 ? 120 : 30;
     }
     // HUD
     const tot = phase === 'break' ? breakLen(period) : CLASS_LEN;
@@ -586,7 +654,7 @@ $('bookBtn').onclick = openBook;
 $('bookOk').onclick = () => modal('book', false);
 $('noteOk').onclick = () => modal('note', false);
 $('logoutB').onclick = () => { token = ''; nick = ''; localStorage.removeItem('hor_tok'); modal('book', false); toast('로그아웃했어요 (게스트로 계속)'); };
-$('retryB').onclick = () => { modal('dead', false); reset(); };
+$('retryB').onclick = () => { modal('dead', false); $('drawShow').classList.remove('show'); reset(); };
 $('againB').onclick = () => { modal('win', false); reset(); };
 $('startB').onclick = () => { audioInit(); modal('intro', false); reset(); started = true; bellSound(1.06); };
 function goIntro() { modal('login', false); modal('intro', true); }

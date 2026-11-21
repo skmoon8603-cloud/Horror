@@ -237,3 +237,61 @@ export const crackTex = () => canvasTex(512, 256, (g, w, h) => {
   for (let i = 0; i < 18; i++) { g.lineWidth = 1 + R() * 2; g.beginPath(); let x = cx0, y = cy0; g.moveTo(x, y); const a = R() * 7; for (let k = 0; k < 6; k++) { x += Math.cos(a + (R() - 0.5)) * 40; y += Math.sin(a + (R() - 0.5)) * 30; g.lineTo(x, y); } g.stroke(); }
   for (let r = 20; r < 90; r += 25) { g.lineWidth = 1; g.beginPath(); for (let a = 0; a < 7; a += 0.6) g.lineTo(cx0 + Math.cos(a) * r * (0.8 + R() * 0.4), cy0 + Math.sin(a) * r * 0.6); g.closePath(); g.stroke(); }
 });
+
+// 데칼코마니: 바닥·벽을 타고 다니는 좌우 대칭 먹물 얼룩
+export const inkBlotTex = () => canvasTex(512, 512, (g, w, h) => {
+  g.clearRect(0, 0, w, h);
+  const half = document.createElement('canvas'); half.width = w / 2; half.height = h; const hg = half.getContext('2d');
+  const blob = (x, y, r, a) => { hg.fillStyle = `rgba(8,4,6,${a})`; hg.beginPath(); for (let t = 0; t < 6.3; t += 0.35) { const rr = r * (0.6 + R() * 0.6); hg.lineTo(x + Math.cos(t) * rr, y + Math.sin(t) * rr); } hg.fill(); };
+  blob(w / 2 - 20, h / 2, 120, 0.95);
+  for (let i = 0; i < 26; i++) { const a = R() * 6.28, d = 60 + R() * 140; blob(w / 2 - 10 - Math.abs(Math.cos(a)) * d, h / 2 + Math.sin(a) * d, 10 + R() * 45, 0.9); }
+  for (let i = 0; i < 40; i++) { const x = w / 2 - R() * 230, y = R() * h; hg.fillStyle = 'rgba(8,4,6,.85)'; hg.beginPath(); hg.arc(x, y, 1 + R() * 5, 0, 7); hg.fill(); }
+  hg.globalCompositeOperation = 'destination-out'; // 눈처럼 보이는 빈 구멍
+  hg.beginPath(); hg.ellipse(w / 2 - 55, h / 2 - 40, 16, 26, 0.3, 0, 7); hg.fill();
+  hg.beginPath(); hg.ellipse(w / 2 - 30, h / 2 + 60, 30, 7, 0, 0, 7); hg.fill();
+  g.drawImage(half, 0, 0); g.save(); g.translate(w, 0); g.scale(-1, 1); g.drawImage(half, 0, 0); g.restore();
+}, { srgb: true });
+
+// 벽에 색연필로 그려진 기괴한 사람 (데칼코마니에게 접힌 학생들). me=true 면 나(조끼·넥타이)
+export const pencilPersonTex = (seed = 0, me = false) => canvasTex(256, 400, (g, w, h) => {
+  g.clearRect(0, 0, w, h);
+  let s = seed * 9301 + 49297; const rnd = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+  const pal = me ? { top: '#1b1b20', sh: '#f0f0f0', pants: '#5a5d63', skin: '#e8b896' } : [{ top: '#2a3f7a', sh: '#f2f2f2', pants: '#2a2a40', skin: '#e9b593' }, { top: '#7a1f2a', sh: '#f2f2f2', pants: '#3a2a20', skin: '#e3a985' }, { top: '#2f5a3a', sh: '#efefe6', pants: '#33363a', skin: '#efc3a2' }][seed % 3];
+  // 색연필 칠: 얇고 반투명한 선을 여러 번 겹친다
+  const scribble = (pts, col, n = 60, wdt = 2) => {
+    g.strokeStyle = col; g.lineCap = 'round';
+    const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]); const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    g.save(); g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.clip();
+    for (let i = 0; i < n; i++) { g.globalAlpha = 0.25 + rnd() * 0.4; g.lineWidth = wdt * (0.6 + rnd()); g.beginPath(); const y = y0 + rnd() * (y1 - y0), x = x0 - 10; g.moveTo(x, y); g.lineTo(x1 + 10, y + (rnd() - 0.3) * 30); g.stroke(); }
+    g.restore(); g.globalAlpha = 1;
+  };
+  const outline = (pts, col = '#151010', wdt = 2.2) => { for (let k = 0; k < 2; k++) { g.strokeStyle = col; g.globalAlpha = 0.7; g.lineWidth = wdt; g.beginPath(); pts.forEach(([x, y], i) => { const j = () => (rnd() - 0.5) * 2.5; i ? g.lineTo(x + j(), y + j()) : g.moveTo(x + j(), y + j()); }); g.closePath(); g.stroke(); } g.globalAlpha = 1; };
+  const L = (pts) => pts.map(([x, y]) => [w / 2 - x, y]), Rr = (pts) => pts.map(([x, y]) => [w / 2 + x, y]);
+  const twist = rnd() * 30 - 15, armLen = 120 + rnd() * 80, neck = 20 + rnd() * 40;
+  const headY = 60, bodyTop = headY + 40 + neck;
+  // 다리 (너무 가늘고 길다)
+  for (const side of [L, Rr]) { const leg = side([[8, bodyTop + 110], [26, bodyTop + 110], [30 + twist * 0.3, h - 14], [16, h - 12]]); scribble(leg, pal.pants, 40); outline(leg); }
+  // 몸통
+  const body = [[w / 2 - 38, bodyTop], [w / 2 + 38, bodyTop], [w / 2 + 34, bodyTop + 115], [w / 2 - 34, bodyTop + 115]];
+  scribble(body, pal.sh, 40); scribble(me ? [[w / 2 - 38, bodyTop], [w / 2 - 6, bodyTop + 60], [w / 2 + 6, bodyTop + 60], [w / 2 + 38, bodyTop], [w / 2 + 34, bodyTop + 105], [w / 2 - 34, bodyTop + 105]] : body, pal.top, 70); outline(body);
+  if (me) { g.strokeStyle = '#eee'; g.lineWidth = 3; g.beginPath(); g.moveTo(w / 2 - 34, bodyTop); g.lineTo(w / 2, bodyTop + 64); g.lineTo(w / 2 + 34, bodyTop); g.stroke(); scribble([[w / 2 - 5, bodyTop], [w / 2 + 5, bodyTop], [w / 2 + 6, bodyTop + 55], [w / 2 - 6, bodyTop + 55]], '#3b4250', 20); }
+  // 팔 (비틀리고 바닥까지 길다)
+  for (const sgn of [-1, 1]) { const ax = w / 2 + sgn * 38; const arm = [[ax, bodyTop + 4], [ax + sgn * 14, bodyTop + 4], [ax + sgn * (30 + twist * sgn), bodyTop + armLen], [ax + sgn * (16 + twist * sgn), bodyTop + armLen + 6]]; scribble(arm, pal.sh, 30); outline(arm);
+    const hx = ax + sgn * (24 + twist * sgn), hy = bodyTop + armLen + 8; g.strokeStyle = '#2a1a14'; g.lineWidth = 2; for (let f = 0; f < 5; f++) { g.beginPath(); g.moveTo(hx, hy); g.lineTo(hx + sgn * (f - 2) * 6, hy + 18 + rnd() * 16); g.stroke(); } }
+  // 목·머리
+  const nk = [[w / 2 - 7, headY + 30], [w / 2 + 7, headY + 30], [w / 2 + 7, bodyTop], [w / 2 - 7, bodyTop]]; scribble(nk, pal.skin, 20); outline(nk, '#2a1a14', 1.5);
+  const hd = []; for (let a = 0; a < 6.28; a += 0.3) hd.push([w / 2 + Math.cos(a) * 34, headY + Math.sin(a) * 40]);
+  scribble(hd, pal.skin, 50); outline(hd);
+  g.fillStyle = '#120a0a'; for (let k = 0; k < 40; k++) { g.globalAlpha = 0.5; g.fillRect(w / 2 - 36 + rnd() * 72, headY - 44 + rnd() * 26, 2, 10 + rnd() * 14); } g.globalAlpha = 1; // 머리카락
+  for (const sgn of [-1, 1]) { g.fillStyle = '#050505'; g.beginPath(); g.ellipse(w / 2 + sgn * 13, headY - 2, 8, 11, 0, 0, 7); g.fill(); g.strokeStyle = '#7a0a0a'; g.lineWidth = 2; g.beginPath(); g.moveTo(w / 2 + sgn * 13, headY + 8); g.lineTo(w / 2 + sgn * 14, headY + 26 + rnd() * 30); g.stroke(); } // 눈 + 핏물
+  g.fillStyle = '#120505'; g.beginPath(); g.moveTo(w / 2 - 22, headY + 20); g.quadraticCurveTo(w / 2, headY + 42, w / 2 + 22, headY + 20); g.quadraticCurveTo(w / 2, headY + 28, w / 2 - 22, headY + 20); g.fill();
+  // 낙서 글씨
+  g.fillStyle = 'rgba(120,10,10,.75)'; g.font = 'bold 18px "Nanum Pen Script", cursive, sans-serif'; g.save(); g.translate(14, h - 30); g.rotate(-0.08); g.fillText(me ? '너' : ['살려줘', '여기 있어', '조용히 해'][seed % 3], 0, 0); g.restore();
+});
+// 접히는 복도 벽: 원래 벽 위에 구김·접힌 그늘·번진 먹물
+export const foldTex = () => canvasTex(512, 512, (g, w, h) => {
+  const base = wallTex().image; g.drawImage(base, 0, 0, w / 2, h); g.drawImage(base, w / 2, 0, w / 2, h);
+  for (let i = 0; i < 40; i++) { g.strokeStyle = `rgba(20,15,10,${0.15 + R() * 0.3})`; g.lineWidth = 1 + R() * 2; g.beginPath(); let x = R() * w, y = R() * h; g.moveTo(x, y); for (let k = 0; k < 5; k++) { x += (R() - 0.5) * 120; y += (R() - 0.5) * 120; g.lineTo(x, y); } g.stroke(); }
+  const gr = g.createLinearGradient(w / 2 - 60, 0, w / 2 + 60, 0); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(0.5, 'rgba(0,0,0,.85)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(w / 2 - 60, 0, 120, h);
+  g.globalAlpha = 0.85; g.drawImage(inkBlotTex().image, w * 0.15, h * 0.2, w * 0.7, h * 0.6); g.globalAlpha = 1;
+});

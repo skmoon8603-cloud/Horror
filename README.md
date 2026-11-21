@@ -8,4 +8,4 @@
 - `src/` 가 원본 코드, `game.js` 는 그걸 하나로 묶은 파일 (esbuild)
   - 다시 묶기: `npm i three esbuild && npx esbuild src/main.js --bundle --minify --format=esm --outfile=game.js`
 - 제목·규칙·쪽지 문구는 `src/main.js` 맨 위 설정에서 바꿀 수 있음
-- `steps.mp3`: 복도 감독 발소리
+- `steps.mp3`: 내(플레이어) 발소리
