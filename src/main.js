@@ -14,6 +14,8 @@ const RULES = {
   mirror: { text: '화장실 거울 속의 나와 오래 눈을 마주치지 말 것. 도플갱어는 화장실 밖으로는 못 나온다.', why: '거울 속의 내가 웃었다. 그리고 나를 거울 속으로 끌고 들어가 내 몸을 차지했다.' },
   sci: { text: '과학 실험실 안전 수칙: 실험 중 장난을 치거나 자리를 비우지 않는다. 과학실 괴물 앞에서 등을 돌려 도망치지 말 것. 사고가 나면 큰 소리로 알린다 — 「선생님!」', why: '등을 돌려 도망쳤다. 시험관이 나를 가리키자 몸이 굳었고, 플라스크 속으로 빨려 들어가 알코올램프 불꽃에 녹아내렸다.' },
   bc: { text: '방송 괴담: 방송이 나오면 귀를 막을 것. 방송을 따라가면 돌아오지 못한다.', why: '방송을 끝까지 들어 버렸다. 정신을 차렸을 땐 이미 방송실 문 앞이었다. 그리고 다시는 돌아오지 못했다.' },
+  hall: { text: '복도에서 뛰지 않는다. 뛰면 학생주임이 온다. 교실이나 사물함으로 피할 것.', why: '복도에서 뛰었다. "벌점." 커다란 도장이 내 위로 쾅 하고 찍혔다.' },
+  phone: { text: '교내에서 휴대폰 사용 금지. 휴대폰을 꺼내면 학생주임이 온다.', why: '휴대폰을 꺼냈다. 학생주임이 휴대폰과 함께 나를 압수했다.' },
   gym: { text: '체육관 안에서는 반드시 체육복을 입을 것. 호루라기가 울리면 공이 달려든다.',
  why: '교복을 입은 채 체육관에 들어갔다. 삑— 호루라기 소리와 함께 나도 공이 되었다.' },
 };
@@ -40,6 +42,7 @@ const NPCS = [ // 1학년 4반 (A·B·C·D조). 책상 칸 위치
   { name: '양소연 (D조)', x: 9, y: 7, o: { girl: true, hairColor: 0x8a8a8e }, lines: ['방송 나오면 무조건 귀 막아. 2학년 선배들이 방송 듣고 선생님 따라 다 나가 버렸대.'] },
   { name: '전석오 (D조)', x: 5, y: 3, o: {}, lines: ['괴물이든 뭐든 다 같이 덮치면 이길 수 있을 줄 알았는데…', '화장실 거울 오래 보지 마. 진짜야.'] },
 ];
+const FLOOR_RULES = { decal: '복도에서 떠들지 않는다', sci: '실험 중 장난을 치거나 자리를 비우지 않는다', bc: '방송이 나오면 하던 일을 멈추고 귀를 막는다', run: '복도에서 뛰지 않는다', phone: '교내에서 휴대폰을 사용하지 않는다' };
 const NPCS_21 = [ // 지하 1층: 2학년 1반 생존자들
   { name: '김도현 (2-1, 누나)', o: { girl: true, hairColor: 0x2a1810 }, lines: ['도윤아…! 너 살아 있었구나. 난 그때 보건실에 있어서 살았어.', '우리 반 절반은 방송 듣고 담임 선생님 따라 나갔어. 방송 나오면 무조건 귀 막아.', '같이 내려가자. 출구는 맨 아래야.'] },
   { name: '2학년 1반 반장', o: { glasses: true }, lines: ['여기 교실도 이제 안전하지 않을 거야…', '체육관에서 셋이나 당했어. 체육복 안 입은 채로.'] },
@@ -293,7 +296,7 @@ function drawMesh(tex, x, y, side) {
 function buildDrawings() {
   drawG.clear();
   DRAW_SPOTS.forEach(([x, y, sd], i) => drawMesh(drawTexCache[i] || (drawTexCache[i] = TX.pencilPersonTex(i + 1, false)), x, y, sd));
-  for (let i = 0; i < Math.min(ME_SPOTS.length, save.folds || 0); i++) { const [x, y, sd] = ME_SPOTS[i]; drawMesh(drawTexCache['me' + i] || (drawTexCache['me' + i] = TX.pencilPersonTex(100 + i, true)), x, y, sd); }
+  // (죽은 자리에 실제로 찍힌 그림이 남으므로 고정 위치 그림은 쓰지 않는다)
 }
 let meURL = '';
 function meDrawURL() { if (!meURL) { const t = TX.pencilPersonTex(7, true); meURL = t.image.toDataURL(); } return meURL; }
@@ -314,7 +317,7 @@ for (const n of NPCS) { // 1학년 4반 친구들
 
 // ===== 층 (1층 = 학교, 그 아래로 백룸처럼 끝없이 이어지는 지하층) =====
 const level1 = new THREE.Group(); for (const o of scene.children.slice()) if (!sceneBase.has(o)) level1.add(o); scene.add(level1);
-const LV0 = { depth: 0, T, RM, LOCKERS, start: [7.5, 8.5], group: level1 };
+const LV0 = { depth: 0, T, RM, LOCKERS, start: [7.5, 8.5], group: level1, rules: ['decal', 'mirror', 'sci', 'gym', 'bc'] };
 const levels = {};
 const rngOf = (seed) => { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
 const bWallMat = std({ map: TX.backroomWallTex(), roughness: 0.9 }), bCarpet = std({ map: TX.carpetTex(), roughness: 0.95 }), redDoorMat = std({ map: TX.redDoorTex(), roughness: 0.6 });
@@ -398,7 +401,9 @@ function genLevel(depth) {
       npcs.push({ model: st, px, py, name: n.name, lines: n.lines, i: 0 }); });
     const sg = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.19), std({ map: TX.signTex('2-1'), roughness: 0.7, side: THREE.DoubleSide })); sg.position.set((r1.x + r1.w / 2) * S, 2.5, r1.y * S + 0.02); grp.add(sg);
   }
-  const L = { depth, T: T2, RM: RM2, LOCKERS: lockers, start, group: grp, spawn, stair, door, flick: fl2, npcs, rooms };
+  const pool = ['decal', 'sci', 'bc', 'run', 'phone']; for (let i = pool.length - 1; i > 0; i--) { const j = (R() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  const rules = pool.slice(0, depth < 3 ? 1 : depth < 6 ? 2 : 3); // 내려갈수록 뒤틀린 교칙이 여러 개 겹친다
+  const L = { depth, T: T2, RM: RM2, LOCKERS: lockers, start, group: grp, spawn, stair, door, flick: fl2, npcs, rooms, rules };
   levels[depth] = L; return L;
 }
 let level = 0, LV = LV0, transitioning = false;
@@ -510,7 +515,7 @@ const breakLen = (p) => Math.max(35, 62 - p * 5), CLASS_LEN = 22;
 const trailGeo = new THREE.CylinderGeometry(0.2, 0.23, 1, 10, 1, true);
 let monSeq = 0;
 function addMon(kind, x, y) {
-  const model = kind === 'sci' ? MD.makeScience() : kind === 'doll' ? MD.makeGiantHand() : kind === 'monitor' ? MD.makeTextbookGirl() : kind === 'pe' ? MD.makePE() : kind === 'ball' ? MD.makeBall((Math.random() * 3) | 0) : MD.makeStudent();
+  const model = kind === 'hak' ? MD.makeHak() : kind === 'sci' ? MD.makeScience() : kind === 'doll' ? MD.makeGiantHand() : kind === 'monitor' ? MD.makeTextbookGirl() : kind === 'pe' ? MD.makePE() : kind === 'ball' ? MD.makeBall((Math.random() * 3) | 0) : MD.makeStudent();
   if (kind === 'mirror') MD.setGrin(model, true);
   model.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   scene.add(model);
@@ -524,6 +529,7 @@ function addMon(kind, x, y) {
 function removeMon(m) { scene.remove(m.model); if (m.trailG) scene.remove(m.trailG); mons = mons.filter((o) => o !== m); }
 function farSpawn() { const c = LV.spawn; let best = c[0], bd = -1; for (let i = 0; i < 40; i++) { const p = c[(Math.random() * c.length) | 0]; const d = Math.hypot(p[0] - P.x, p[1] - P.y); if (d > bd) { bd = d; best = p; } } return best; }
 function reset() {
+  deathCam = null;
   if (mons) for (const m of mons.slice()) removeMon(m);
   P = { x: LV.start[0], y: LV.start[1] }; yaw = 0; pitch = 0;
   mons = [];
@@ -542,9 +548,8 @@ function reset() {
     buildDrawings();
   } else {
     peMon = null; inv.broom = Math.max(inv.broom, 1);
-    const n = Math.min(3, 1 + Math.floor(level / 2));
-    if (isHost()) { for (let i = 0; i < n; i++) { const p = farSpawn(); addMon('doll', p[0], p[1]); }
-    if (level >= 2) { const p = farSpawn(); addMon('sci', p[0], p[1]); } }
+    if (isHost()) { if (LV.rules.includes('decal')) { const p = farSpawn(); addMon('doll', p[0], p[1]); } if (LV.rules.includes('sci')) { const p = farSpawn(); addMon('sci', p[0], p[1]); } }
+    showRules();
   }
   updKey(); monitorSteps(null); playerSteps(0); $('floorChip').textContent = floorName(level);
 }
@@ -622,7 +627,8 @@ function update(dt) {
     playerSteps(running ? 2 : sneak ? 0.5 : 1);
   }
   if (hidden || ml <= 0.15) playerSteps(0);
-  P.noise = noiseR;
+  P.noise = noiseR; hakCD -= dt;
+  if (running && ml > 0.15 && level && rr(P.x | 0, P.y | 0) === 0) violate('run');
 
   // 쪽지·열쇠·계단
   if (level === 0) {
@@ -698,6 +704,12 @@ function update(dt) {
       if (!hidden && d < 0.6) return die('mirror', m);
     }
     else if (m.kind === 'sci') { if (updateSci(m, d, dt)) return; }
+    else if (m.kind === 'hak') { // 학생주임: 교칙을 어긴 사람을 쫓아온다 (교실·사물함 안까지는 못 들어온다)
+      m.life -= dt; if (m.pathT <= 0) { m.pathT = 0.3; m.path = hidden || inClass() ? [] : bfs(m.x, m.y, P.x, P.y) || []; }
+      follow(m, 2.9, dt); m.rustleT -= dt; if (m.rustleT <= 0) { m.rustleT = 0.5; noise(0.06, Math.min(0.8, 2 / (1 + d * 0.3)), 2600, panOf(m.x, m.y), 3); }
+      if (m.life <= 0) { removeMon(m); toast('학생주임이 돌아갔다…', 1500); continue; }
+      if (!hidden && d < 0.65) return die(m.why || 'hall', m);
+    }
     else if (m.kind === 'pe') { // 체육 괴물: 체육관 밖으로는 나오지 않는다
       const inGym = rr(P.x | 0, P.y | 0) === 6;
       if (inGym) { m.fx = P.x - m.x; m.fy = P.y - m.y; const l = Math.hypot(m.fx, m.fy) || 1; m.fx /= l; m.fy /= l; }
@@ -877,13 +889,26 @@ function startBroadcast() {
 }
 function endBroadcast() { bc = null; $('earB').style.display = 'none'; document.body.classList.remove('bcast'); if (window.speechSynthesis) try { speechSynthesis.cancel(); } catch (e) {} }
 function updateBroadcast(dt) {
-  if (!bc) { if (isHost() && phase === 'break' && period >= bcNext && phaseT < breakLen(period) - 12 && phaseT > 14) { bcNext = period + 2 + ((Math.random() * 2) | 0); startBroadcast(); } return; }
+  if (!bc) { if (isHost() && LV.rules.includes('bc') && phase === 'break' && period >= bcNext && phaseT < breakLen(period) - 12 && phaseT > 14) { bcNext = period + 2 + ((Math.random() * 2) | 0); startBroadcast(); } return; }
   bc.t += dt;
   if (bc.t > 1.5 && !earsHeld) bc.exp += dt; else bc.exp = Math.max(0, bc.exp - dt * 0.5);
   bc.pulled = bc.exp > 1.6; // 홀려서 방송실 쪽으로 걸어간다
   $('bcTxt').textContent = earsHeld ? '🙉 귀를 막았다… (방송 ' + Math.max(0, 12 - bc.t).toFixed(0) + '초)' : bc.pulled ? '…방송실로… 가야 해…' : '📢 지지직… 방송이 나온다! 귀를 막아!';
   if (bc.exp > 5) { endBroadcast(); die('bc', null); return; }
   if (bc.t > 12) { endBroadcast(); toast('방송이 끝났다…', 1500); }
+}
+
+// ===== 뒤틀린 교칙: 학생주임 =====
+let hakCD = 0;
+function violate(rule) {
+  if (!LV.rules || !LV.rules.includes(rule) || hakCD > 0 || !alive) return;
+  hakCD = 18; const p = farSpawn(); const m = addMon('hak', p[0], p[1]); m.life = 16; m.why = rule === 'run' ? 'hall' : 'phone';
+  speak('거기! 교칙 위반이다!', 0.5, 0.9, 1); toast('📢 「' + FLOOR_RULES[rule] + '」 위반!<br>학생주임이 온다 — 교실이나 사물함으로 피해!', 3000);
+}
+function showRules() {
+  const list = ['수업 종이 울리면 반드시 교실 안에 있는다'].concat((LV.rules || []).filter((r) => FLOOR_RULES[r]).map((r) => FLOOR_RULES[r]));
+  $('ruleBoard').innerHTML = '<b>📋 ' + floorName(level) + '의 교칙</b>' + list.map((t, i) => '<div>' + (i + 1) + '. ' + t + '</div>').join('');
+  $('ruleBoard').classList.add('show'); clearTimeout(showRules.t); showRules.t = setTimeout(() => $('ruleBoard').classList.remove('show'), 6500);
 }
 
 // ===== 소리 이벤트·말하기·던지기·대화 =====
@@ -897,7 +922,7 @@ function speak(text, pitch, rate, vol) {
 function whistle() { if (!AC) return; const t = AC.currentTime; for (const [a, b] of [[0, 0.35], [0.5, 1.2]]) { const o = AC.createOscillator(), g = AC.createGain(), l = AC.createOscillator(), lg = AC.createGain(); o.frequency.value = 2900; l.frequency.value = 38; lg.gain.value = 180; l.connect(lg); lg.connect(o.frequency); g.gain.setValueAtTime(0, t + a); g.gain.linearRampToValueAtTime(0.35, t + a + 0.03); g.gain.setValueAtTime(0.35, t + b - 0.05); g.gain.linearRampToValueAtTime(0, t + b); o.connect(g); g.connect(master); o.start(t + a); l.start(t + a); o.stop(t + b + 0.05); l.stop(t + b + 0.05); } }
 function throwItem() {
   if (!started || !alive || anyModal() || hidden || frozen || inv.phone + inv.broom <= 0) return;
-  const kind = inv[throwSel] > 0 ? throwSel : inv.broom > 0 ? 'broom' : 'phone'; inv[kind]--; updKey(); audioInit();
+  const kind = inv[throwSel] > 0 ? throwSel : inv.broom > 0 ? 'broom' : 'phone'; inv[kind]--; updKey(); audioInit(); if (kind === 'phone' && level) violate('phone');
   const fx = -Math.sin(yaw), fy = -Math.cos(yaw); let d = 0.5; while (d < 8) { d += 0.1; if (solid(Math.floor(P.x + fx * d), Math.floor(P.y + fy * d))) { d -= 0.3; break; } }
   const obj = kind === 'broom' ? MD.broom() : new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.015, 0.14), std({ color: 0x222, roughness: 0.3, metalness: 0.4 })); obj.castShadow = true; scene.add(obj);
   thrown.push({ obj, sx: P.x, sy: P.y, ex: P.x + fx * d, ey: P.y + fy * d, t: 0, dur: 0.25 + d * 0.06, landed: false });
@@ -1051,8 +1076,21 @@ function die(rule, m) {
   if (hidden) leaveHide(); monitorSteps(null);
   mpEmit({ t: 'dead', rule });
   const isNew = !save.rules.includes(rule); if (isNew) save.rules.push(rule); save.deaths++; if (rule === 'run') save.folds = (save.folds || 0) + 1; persist(); playerSteps(0);
-  if (rule === 'run') setTimeout(() => { $('drawShow').style.backgroundImage = 'url(' + meDrawURL() + ')'; $('drawShow').classList.add('show'); }, 450);
-  setTimeout(() => { $('deadWhy').textContent = RULES[rule].why; $('deadRule').textContent = '📓 ' + RULES[rule].text; $('deadNew').textContent = isNew ? '새 규칙이 수첩에 적혔다.' : '이미 알고 있던 규칙이다…'; modal('dead', true); }, 1500);
+  if (rule === 'run' && fold) printMe(); // 벽에 찍힌 괴물이 된 내 모습을 보여 준다 (그림 화면 대신)
+  killer.show = () => { $('deadWhy').textContent = RULES[rule].why; $('deadRule').textContent = '📓 ' + RULES[rule].text; $('deadNew').textContent = isNew ? '새 규칙이 수첩에 적혔다.' : '이미 알고 있던 규칙이다…'; modal('dead', true); };
+  killer.at = rule === 'run' && deathCam ? 3.0 : 1.4; // 연출이 끝난 뒤 (게임 시간 기준)
+}
+// 데칼코마니: 접힌 자리 벽과 바닥에 내 모습이 그림으로 찍힌다. 카메라가 몸에서 빠져나와 그 그림을 비춘다
+let deathCam = null; const meDecalMat = () => std({ map: TX.meDecalTex(7 + (save.folds || 0)), transparent: true, roughness: 0.9, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+function printMe() {
+  const f = fold, grp = level ? LV.group : level1, mat = meDecalMat();
+  let pos, rotY, normal; // 가로지르는 방향에서 더 가까운 벽
+  if (f.axisX) { const north = P.y - f.a0 < f.a1 + 1 - P.y; pos = new THREE.Vector3(P.x * S, 1.0, (north ? f.a0 : f.a1 + 1) * S + (north ? 0.015 : -0.015)); rotY = north ? 0 : Math.PI; normal = new THREE.Vector3(0, 0, north ? 1 : -1); }
+  else { const west = P.x - f.a0 < f.a1 + 1 - P.x; pos = new THREE.Vector3((west ? f.a0 : f.a1 + 1) * S + (west ? 0.015 : -0.015), 1.0, P.y * S); rotY = west ? Math.PI / 2 : -Math.PI / 2; normal = new THREE.Vector3(west ? 1 : -1, 0, 0); }
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 1.9), mat); wall.position.copy(pos); wall.rotation.y = rotY; wall.rotation.z = (Math.random() - 0.5) * 0.1; grp.add(wall);
+  const floorP = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 1.9), mat); floorP.rotation.set(-Math.PI / 2, 0, rotY); floorP.position.set(pos.x + normal.x * 1.0, 0.012, pos.z + normal.z * 1.0); grp.add(floorP); // 맞은편(바닥)에도 대칭으로 찍힘
+  const along = f.axisX ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1); if (along.dot(new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw))) > 0) along.negate();
+  deathCam = { from: camera.position.clone(), to: pos.clone().addScaledVector(normal, 3.4).addScaledVector(along, 0.8).setY(1.55), look: pos.clone().setY(0.95), q0: camera.quaternion.clone() };
 }
 function win() {
   alive = false; killer = null; save.clears++; const t = Math.round(runTime); if (!save.best || t < save.best) save.best = t; persist(); monitorSteps(null);
@@ -1067,7 +1105,7 @@ let tAll = 0, lastT = performance.now(), lowQ = false, qN = 0, qT = 0;
 function frame() {
   const nowT = performance.now(), dt = Math.min(0.05, (nowT - lastT) / 1000); lastT = nowT; tAll += dt;
   if (started && alive && !anyModal()) update(dt);
-  if (started && !alive) deadT += dt;
+  if (started && !alive) { deadT += dt; if (killer && killer.show && deadT >= killer.at) { const f = killer.show; killer.show = null; f(); } if (fold && killer && killer.rule === 'run') updateFold(dt); }
   if (P) {
     const targetEye = hidden ? 1.55 : sneak ? 1.12 : 1.6; eye += (targetEye - eye) * Math.min(1, dt * 8);
     const moving = Math.hypot(joy.x, joy.y) > 0.15 || keys.w || keys.a || keys.s || keys.d || keys.arrowup || keys.arrowdown;
@@ -1076,6 +1114,7 @@ function frame() {
     const sh = shakeT > 0 ? (Math.random() - 0.5) * 0.05 : 0;
     camera.position.set(P.x * S + sh, eye + bob + sh, P.y * S);
     camera.rotation.set(0, 0, 0); camera.rotateY(yaw); camera.rotateX(pitch);
+    if (deathCam && !alive) { const k = Math.min(1, Math.max(0, (deadT - 0.6) / 1.3)), e = k * k * (3 - 2 * k); camera.position.lerpVectors(deathCam.from, deathCam.to, e); const m4 = new THREE.Matrix4().lookAt(camera.position, deathCam.look, new THREE.Vector3(0, 1, 0)); const q = new THREE.Quaternion().setFromRotationMatrix(m4); camera.quaternion.slerpQuaternions(deathCam.q0, q, e); }
     flashModel.position.y = -0.2 + bob * 0.6; flashModel.position.x = 0.12 + (moving ? Math.cos(stepPh) * 0.008 : 0);
     flash.intensity = hidden ? 0 : 30 * (Math.random() < 0.004 ? 0.2 : 1);
     flashModel.visible = !hidden;
@@ -1085,6 +1124,7 @@ function frame() {
       const tr = Math.atan2(m.fx, m.fy); md.rotation.y += (((tr - md.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI) * Math.min(1, dt * 6);
       if (m.kind === 'doll') placeDecal(m, md, dt);
       else if (m.kind === 'monitor') { MD.animateWalk(md, tAll, m.state === 'chase' ? 11 : 4, m.state === 'chase' ? 0.7 : 0.35); md.userData.head.rotation.z = m.state === 'chase' ? 0.3 : Math.sin(tAll * 1.3) * 0.15; if (m.state === 'chase') for (const a of md.userData.arms) a.rotation.x = -1.2 + Math.sin(tAll * 11) * 0.3; }
+      else if (m.kind === 'hak') { MD.animateWalk(md, tAll, 7, 0.5); md.userData.arms[1].rotation.x = -0.6 + Math.sin(tAll * 7) * 0.5; }
       else if (m.kind === 'sci') { const u = md.userData, lock = m.state === 'lock', off = m.state === 'retreat'; const fl = off ? 0.05 : lock ? 1 + m.lockT * 0.9 : 1 + Math.sin(tAll * 9) * 0.1; u.flame.scale.set(fl, fl * (lock ? 1.6 : 1), fl); u.inner.visible = !off; u.light.intensity = off ? 0 : lock ? 3 + m.lockT * 2 : 1.6; if (lock) { u.arms[1].rotation.x = -1.4; } else { u.arms[1].rotation.x = Math.sin(tAll) * 0.1; } md.position.y = Math.abs(Math.sin(tAll * 3)) * 0.03; }
       else if (m.kind === 'pe') { md.userData.head.rotation.z = Math.sin(tAll * 0.8) * 0.2; md.userData.arms[1].rotation.x = whistled ? -2.4 : -0.1; }
       else if (m.kind === 'ball') { md.userData.ball.rotation.set(0, 0, 0); md.rotation.y = Math.atan2(m.fx, m.fy); md.userData.ball.rotation.x = m.roll || 0; md.position.y = Math.abs(Math.sin(tAll * 9 + m.x)) * 0.25; }
@@ -1133,7 +1173,7 @@ function openBook() {
   if (!started) return;
   const r = Object.keys(RULES).map((k) => save.rules.includes(k) ? '<div class="rule">' + RULES[k].text + '</div>' : '<div class="rule" style="opacity:.35">??? (아직 모르는 규칙)</div>').join('');
   const n = Object.keys(NOTES).filter((k) => save.notes.includes(k)).map((k) => '<div class="rule n"><b>' + NOTES[k].t + '</b><br>' + NOTES[k].b.replace(/\n/g, '<br>') + '</div>').join('');
-  $('bookB').innerHTML = '<p><b>알아낸 규칙</b> <span class="muted">(죽으면서 배운다)</span></p>' + r + '<p><b>주운 쪽지</b> ' + save.notes.length + '/' + Object.keys(NOTES).length + '</p>' + n + '<p class="muted">죽은 횟수 ' + save.deaths + ' · 가장 깊이 내려간 곳: ' + (save.deep ? '지하 ' + save.deep + '층' : '1층') + '</p>';
+  $('bookB').innerHTML = '<p><b>📋 ' + floorName(level) + '의 교칙</b></p>' + ['수업 종이 울리면 반드시 교실 안에 있는다'].concat((level ? LV.rules : []).map((r) => FLOOR_RULES[r]).filter(Boolean)).map((t) => '<div class="rule n">' + t + '</div>').join('') + '<p><b>알아낸 규칙</b> <span class="muted">(죽으면서 배운다)</span></p>' + r + '<p><b>주운 쪽지</b> ' + save.notes.length + '/' + Object.keys(NOTES).length + '</p>' + n + '<p class="muted">죽은 횟수 ' + save.deaths + ' · 가장 깊이 내려간 곳: ' + (save.deep ? '지하 ' + save.deep + '층' : '1층') + '</p>';
   $('acctLine').textContent = token ? '로그인: ' + (nick || '계정') + ' · 서버에 저장 중' : '게스트 · 이 기기에만 저장 중';
   $('logoutB').style.display = token ? '' : 'none';
   modal('book', true);
@@ -1158,7 +1198,7 @@ $('bagB').addEventListener('click', (e) => {
   if (a === 'selphone' || a === 'selbroom') { throwSel = a.slice(3); updKey(); openBag(); }
   else if (a === 'map') { modal('bag', false); openMap(); }
   else if (a === 'book') { modal('bag', false); openBook(); }
-  else if (a === 'clock') { const inside = runTime, outside = inside / 365; modal('bag', false); $('noteT').textContent = '📱 핸드폰'; $('noteB').textContent = '신호 없음 · 배터리 ' + Math.max(1, 100 - Math.floor(inside / 60)) + '%\n\n검은 원 안에서 흐른 시간: ' + fmt(inside) + '\n바깥에서 흐른 시간: ' + outside.toFixed(1) + '초\n\n(안에서의 1년이 밖에서는 하루)'; modal('note', true); }
+  else if (a === 'clock') { if (level) violate('phone'); const inside = runTime, outside = inside / 365; modal('bag', false); $('noteT').textContent = '📱 핸드폰'; $('noteB').textContent = '신호 없음 · 배터리 ' + Math.max(1, 100 - Math.floor(inside / 60)) + '%\n\n검은 원 안에서 흐른 시간: ' + fmt(inside) + '\n바깥에서 흐른 시간: ' + outside.toFixed(1) + '초\n\n(안에서의 1년이 밖에서는 하루)'; modal('note', true); }
 });
 function openMap() {
   if (!started) return;
@@ -1213,4 +1253,4 @@ $('loginB').onclick = async () => {
 if (token) { $('lmsg').textContent = '저장된 로그인으로 접속 중…'; loadServer().then(goIntro).catch((e) => { if (e.status === 401) { token = ''; localStorage.removeItem('hor_tok'); } $('lmsg').textContent = e.status === 401 ? '다시 로그인해 주세요' : '서버에 연결하지 못했어요. 게스트로 먼저 해 보세요'; }); }
 document.title = GAME_TITLE;
 // 테스트·디버그용
-window.__g = { mp, mpConnect, get bc() { return bc; }, get anyM() { return anyModal() && anyModal().id; }, startBc: startBroadcast, descend, get level() { return level; }, get LV() { return LV; }, get fold() { return fold; }, get noiseEvents() { return noiseEvents; }, throwItem, get npcs() { return npcModels; }, givePE() { hasPE = true; updKey(); }, get calls() { return renderer.info.render.calls; }, get P() { return P; }, get mons() { return mons; }, get mir() { return mir; }, set yaw(v) { yaw = v; }, set pitch(v) { pitch = v; }, get alive() { return alive; }, get save() { return save; }, setPhaseT(v) { phaseT = v; }, get phase() { return phase; }, get stairsOpen() { return stairsOpen; }, giveKey() { hasKey = true; updKey(); }, get keyPos() { return keyPos; } };
+window.__g = { get deadT() { return deadT; }, addMon, violate, get deathCam() { return deathCam; }, mp, mpConnect, get bc() { return bc; }, get anyM() { return anyModal() && anyModal().id; }, startBc: startBroadcast, descend, get level() { return level; }, get LV() { return LV; }, get fold() { return fold; }, get noiseEvents() { return noiseEvents; }, throwItem, get npcs() { return npcModels; }, givePE() { hasPE = true; updKey(); }, get calls() { return renderer.info.render.calls; }, get P() { return P; }, get mons() { return mons; }, get mir() { return mir; }, set yaw(v) { yaw = v; }, set pitch(v) { pitch = v; }, get alive() { return alive; }, get save() { return save; }, setPhaseT(v) { phaseT = v; }, get phase() { return phase; }, get stairsOpen() { return stairsOpen; }, giveKey() { hasKey = true; updKey(); }, get keyPos() { return keyPos; } };

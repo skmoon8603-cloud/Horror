@@ -378,3 +378,45 @@ export const redDoorTex = () => canvasTex(128, 256, (g, w, h) => {
   g.fillStyle = '#eee'; g.font = 'bold 20px sans-serif'; g.textAlign = 'center'; g.fillText('▼ 아래로', w / 2, 76);
   stains(g, w, h, 10, '20,0,0', 0.3, 0.3); grain(g, w, h, 14);
 });
+// 몸통을 감싸는 조끼 (가운데가 앞): 검정 니트 + 좁은 V넥 + 흰 셔츠·넥타이 + 흰 줄
+export const vestWrapTex = (opts = {}) => canvasTex(512, 256, (g, w, h) => {
+  g.fillStyle = opts.base || '#16171a'; g.fillRect(0, 0, w, h);
+  for (let y = 0; y < h; y += 3) for (let x = 0; x < w; x += 4) { g.fillStyle = `rgba(255,255,255,${0.02 + R() * 0.03})`; g.fillRect(x, y, 2, 2); }
+  const c = w / 2, vw = w * 0.085, vd = h * 0.5;
+  g.fillStyle = '#eef0f2'; g.beginPath(); g.moveTo(c - vw, 0); g.lineTo(c, vd); g.lineTo(c + vw, 0); g.fill();
+  if (!opts.noTie) { g.fillStyle = opts.tie || '#3b4250'; g.beginPath(); g.moveTo(c - 6, 0); g.lineTo(c + 6, 0); g.lineTo(c + 9, vd * 0.9); g.lineTo(c, vd * 0.98); g.lineTo(c - 9, vd * 0.9); g.fill(); }
+  if (opts.ribbon) { g.fillStyle = '#b01828'; g.beginPath(); g.moveTo(c, 18); g.lineTo(c - 24, 6); g.lineTo(c - 24, 30); g.closePath(); g.moveTo(c, 18); g.lineTo(c + 24, 6); g.lineTo(c + 24, 30); g.closePath(); g.fill(); }
+  g.strokeStyle = '#e4e4e4'; g.lineWidth = 5; g.beginPath(); g.moveTo(c - vw - 4, 0); g.lineTo(c, vd + 6); g.lineTo(c + vw + 4, 0); g.stroke();
+  g.strokeStyle = opts.base || '#16171a'; g.lineWidth = 4; g.beginPath(); g.moveTo(c - vw - 9, 0); g.lineTo(c, vd + 12); g.lineTo(c + vw + 9, 0); g.stroke();
+  g.strokeStyle = '#d6d6d6'; g.lineWidth = 3; g.beginPath(); g.moveTo(c - vw - 13, 0); g.lineTo(c, vd + 17); g.lineTo(c + vw + 13, 0); g.stroke();
+  g.fillStyle = 'rgba(255,255,255,.07)'; for (let x = 0; x < w; x += 6) g.fillRect(x, h - 22, 3, 22);
+  g.fillStyle = '#e4e4e4'; g.fillRect(0, h - 26, w, 3);
+});
+// 체육복 (트레이닝복): 남색 + 흰 줄
+export const trackWrapTex = () => canvasTex(256, 128, (g, w, h) => { g.fillStyle = '#1b2850'; g.fillRect(0, 0, w, h); g.fillStyle = '#e8e8e8'; g.fillRect(w * 0.25 - 4, 0, 5, h); g.fillRect(w * 0.75, 0, 5, h); g.fillRect(w / 2 - 2, 0, 3, h * 0.6); grain(g, w, h, 10); });
+export const suitWrapTex = () => canvasTex(512, 256, (g, w, h) => {
+  g.fillStyle = '#2b2d33'; g.fillRect(0, 0, w, h); const c = w / 2;
+  g.fillStyle = '#e4e2da'; g.beginPath(); g.moveTo(c - 34, 0); g.lineTo(c, h * 0.5); g.lineTo(c + 34, 0); g.fill();
+  g.fillStyle = '#7a1414'; g.fillRect(c - 6, 0, 12, h * 0.45);
+  g.strokeStyle = '#18191d'; g.lineWidth = 5; g.beginPath(); g.moveTo(c - 40, 0); g.lineTo(c, h * 0.55); g.lineTo(c, h); g.moveTo(c + 40, 0); g.lineTo(c, h * 0.55); g.stroke();
+  grain(g, w, h, 10);
+});
+// 학생주임 머리 대신 달린 커다란 '벌점' 도장
+export const stampTex = () => canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#e9e3d2'; g.fillRect(0, 0, w, h);
+  g.strokeStyle = '#b3121a'; g.lineWidth = 14; g.beginPath(); g.arc(w / 2, h / 2, 100, 0, 7); g.stroke();
+  g.fillStyle = '#b3121a'; g.font = 'bold 74px serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('벌점', w / 2, h / 2);
+  for (let i = 0; i < 400; i++) { g.fillStyle = 'rgba(233,227,210,.9)'; g.fillRect(R() * w, R() * h, 2, 2); }
+});
+// 데칼코마니에 접혀 벽에 찍힌 '괴물이 된 내 모습' (좌우 대칭으로 번진 연필·먹 그림)
+export const meDecalTex = (seed = 7) => canvasTex(256, 420, (g, w, h) => {
+  g.clearRect(0, 0, w, h);
+  const half = document.createElement('canvas'); half.width = w / 2; half.height = h; const hg = half.getContext('2d');
+  const base = pencilPersonTex(seed, true).image; hg.drawImage(base, 0, 10, w, h - 20); // 왼쪽 절반만 쓰고
+  hg.globalAlpha = 0.85; const ink = (x, y, r) => { hg.fillStyle = 'rgba(10,6,6,.85)'; hg.beginPath(); for (let a = 0; a < 6.3; a += 0.4) { const rr = r * (0.6 + R() * 0.6); hg.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } hg.fill(); };
+  for (let i = 0; i < 18; i++) ink(w / 2 - R() * 40, 60 + R() * (h - 100), 2 + R() * 9);
+  hg.strokeStyle = 'rgba(10,6,6,.8)'; hg.lineWidth = 2; for (let i = 0; i < 8; i++) { hg.beginPath(); hg.moveTo(w / 2 - 10 - R() * 50, 60 + R() * 200); hg.lineTo(w / 2 - 70 - R() * 50, 100 + R() * 280); hg.stroke(); } // 늘어진 팔다리
+  g.drawImage(half, 0, 0); g.save(); g.translate(w, 0); g.scale(-1, 1); g.drawImage(half, 0, 0); g.restore(); // 오른쪽으로 찍어서 대칭(데칼코마니)
+  const cr = g.createLinearGradient(w / 2 - 6, 0, w / 2 + 6, 0); cr.addColorStop(0, 'rgba(0,0,0,0)'); cr.addColorStop(0.5, 'rgba(20,10,10,.6)'); cr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = cr; g.fillRect(w / 2 - 6, 0, 12, h);
+  g.fillStyle = 'rgba(130,10,10,.85)'; g.font = 'bold 22px "Nanum Pen Script", cursive, sans-serif'; g.fillText('김도윤', 12, h - 14);
+});
